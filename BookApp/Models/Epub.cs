@@ -21,5 +21,6 @@ namespace BookApp.Models
                 return Chapters?.Sum(chapter => chapter.WordCount) ?? 0;
             }
         }
+        public bool HasStartNumbers { get; set; }
     }
 }
