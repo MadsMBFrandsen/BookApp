@@ -1,8 +1,8 @@
 namespace BookApp;
 
-public partial class Config : ContentPage
+public partial class ConfigPage : ContentPage
 {
-	public Config()
+	public ConfigPage()
 	{
 		InitializeComponent();
 	}

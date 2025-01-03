@@ -65,10 +65,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="AudioEpub.xaml">
+	  <Compile Update="AudioEpubPage.xaml.cs">
+	    <DependentUpon>AudioEpubPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="AudioTextPage.xaml.cs">
+	    <DependentUpon>AudioTextPage.xaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="AudioEpubPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="AudioText.xaml">
+	  <MauiXaml Update="AudioTextPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Config.xaml">

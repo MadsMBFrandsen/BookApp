@@ -1,8 +1,8 @@
 namespace BookApp;
 
-public partial class RssFeed : ContentPage
+public partial class RssFeedPage : ContentPage
 {
-	public RssFeed()
+	public RssFeedPage()
 	{
 		InitializeComponent();
 	}

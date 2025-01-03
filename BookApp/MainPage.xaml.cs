@@ -2,24 +2,38 @@
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
 
         public MainPage()
         {
             InitializeComponent();
         }
 
-        private void OnCounterClicked(object sender, EventArgs e)
+        private async void OnAudioEpubClicked(object sender, EventArgs e)
         {
-            count++;
-
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
+            await Navigation.PushAsync(new AudioEpubPage());
         }
+
+        private async void OnAudioTextClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new AudioTextPage());
+        }
+
+        private async void OnLibraryClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new LibraryPage());
+        }
+
+        private async void OnRssFeedClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new RssFeedPage());
+        }
+
+        private async void OnConfigClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new ConfigPage());
+        }
+
+
     }
 
 }

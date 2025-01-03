@@ -1,8 +1,8 @@
 namespace BookApp;
 
-public partial class Library : ContentPage
+public partial class LibraryPage : ContentPage
 {
-	public Library()
+	public LibraryPage()
 	{
 		InitializeComponent();
 	}
