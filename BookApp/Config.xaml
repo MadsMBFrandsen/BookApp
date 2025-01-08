@@ -4,7 +4,7 @@
              x:Class="BookApp.ConfigPage"
              Title="ConfigPage">
     
-    <VerticalStackLayout Padding="20" Spacing="15">
+    <!--<VerticalStackLayout Padding="20" Spacing="15">
 
         <Label Text="Text Files Path" />
         <Entry x:Name="TextFilesPathEntry" Placeholder="Select folder for text files" IsReadOnly="True" />
@@ -19,5 +19,5 @@
         <Button Text="Choose ePub Path" Clicked="OnEpubPathClicked" />
 
         <Button Text="Save Configuration" Clicked="OnSaveConfigClicked" BackgroundColor="Green" TextColor="White" />
-    </VerticalStackLayout>
+    </VerticalStackLayout>-->
 </ContentPage>

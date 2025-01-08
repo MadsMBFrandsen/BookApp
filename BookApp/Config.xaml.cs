@@ -1,73 +1,94 @@
+using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Maui.Storage;
 
 namespace BookApp;
 
 public partial class ConfigPage : ContentPage
 {
+    private readonly Entry _textFilesPathEntry;
+    private readonly Entry _soundFilesPathEntry;
+    private readonly Entry _epubDefaultPathEntry;
+
     public ConfigPage()
     {
-        InitializeComponent();
-        LoadConfig();
-    }
+        Title = "Configuration";
 
-    private async void LoadConfig()
-    {
-        // Load saved configuration or set default paths
-        TextFilesPathEntry.Text = Preferences.Get("TextFilesPath", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/TextFiles");
-        SoundFilesPathEntry.Text = Preferences.Get("SoundFilesPath", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/SoundFiles");
-        //EpubDefaultPathEntry.Text = Preferences.Get("EpubDefaultPath", FileSystem.AppDataDirectory + "/ePubFiles");
-#if ANDROID
-        EpubDefaultPathEntry.Text = Preferences.Get(
-            "EpubDefaultPath",
-            Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath
-        );
-#elif IOS
-EpubDefaultPathEntry.Text = Preferences.Get(
-    "EpubDefaultPath",
-    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "..", "Library", "Downloads")
-);
-#else
-EpubDefaultPathEntry.Text = Preferences.Get(
-    "EpubDefaultPath",
-    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
-);
-#endif
+        // Initialize entries
+        _textFilesPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for text files" }
+            .Text(Preferences.Get("TextFilesPath", FileSystem.AppDataDirectory + "/TextFiles"));
+        _soundFilesPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for sound files" }
+            .Text(Preferences.Get("SoundFilesPath", FileSystem.AppDataDirectory + "/SoundFiles"));
+        _epubDefaultPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for ePub files" }
+            .Text(Preferences.Get("EpubDefaultPath", FileSystem.AppDataDirectory + "/ePubFiles"));
+
+        Content = new VerticalStackLayout
+        {
+            Padding = 20,
+            Spacing = 15,
+
+            Children =
+            {
+                new Label { Text = "Text Files Path" },
+                _textFilesPathEntry,
+                new Button { Text = "Choose Text Path" }
+                    .Invoke(button => button.Clicked += OnTextFilesPathClicked),
+
+                new Label { Text = "Sound Files Path" },
+                _soundFilesPathEntry,
+                new Button { Text = "Choose Sound Path" }
+                    .Invoke(button => button.Clicked += OnSoundFilesPathClicked),
+
+                new Label { Text = "Epub Default Path" },
+                _epubDefaultPathEntry,
+                new Button { Text = "Choose Epub Path" }
+                    .Invoke(button => button.Clicked += OnEpubPathClicked),
+
+                new Button { Text = "Save Configuration", BackgroundColor = Colors.Green, TextColor = Colors.White }
+                    .Center()
+                    .Margin(10)
+                    .Invoke(button => button.Clicked += OnSaveConfigClicked)
+            }
+        };
     }
 
     private async void OnTextFilesPathClicked(object sender, EventArgs e)
     {
-        var folderResult = await FolderPicker.Default.PickAsync();
-        if (folderResult.IsSuccessful)
+        var folderPickerResult = await FolderPicker.Default.PickAsync();
+
+        if (folderPickerResult.IsSuccessful)
         {
-            TextFilesPathEntry.Text = folderResult.Folder.Path;
+            _textFilesPathEntry.Text = folderPickerResult.Folder.Path;
         }
     }
 
     private async void OnSoundFilesPathClicked(object sender, EventArgs e)
     {
-        var folderResult = await FolderPicker.Default.PickAsync();
-        if (folderResult.IsSuccessful)
+        var folderPickerResult = await FolderPicker.Default.PickAsync();
+
+        if (folderPickerResult.IsSuccessful)
         {
-            SoundFilesPathEntry.Text = folderResult.Folder.Path;
+            _soundFilesPathEntry.Text = folderPickerResult.Folder.Path;
         }
     }
 
     private async void OnEpubPathClicked(object sender, EventArgs e)
     {
-        var folderResult = await FolderPicker.Default.PickAsync();
-        if (folderResult.IsSuccessful)
+        var folderPickerResult = await FolderPicker.Default.PickAsync();
+
+        if (folderPickerResult.IsSuccessful)
         {
-            EpubDefaultPathEntry.Text = folderResult.Folder.Path;
+            _epubDefaultPathEntry.Text = folderPickerResult.Folder.Path;
         }
     }
 
     private void OnSaveConfigClicked(object sender, EventArgs e)
     {
-        // Save the paths in Preferences
-        Preferences.Set("TextFilesPath", TextFilesPathEntry.Text);
-        Preferences.Set("SoundFilesPath", SoundFilesPathEntry.Text);
-        Preferences.Set("EpubDefaultPath", EpubDefaultPathEntry.Text);
+        // Save paths to Preferences
+        Preferences.Set("TextFilesPath", _textFilesPathEntry.Text);
+        Preferences.Set("SoundFilesPath", _soundFilesPathEntry.Text);
+        Preferences.Set("EpubDefaultPath", _epubDefaultPathEntry.Text);
 
-        DisplayAlert("Configuration Saved", "Your configuration has been saved successfully.", "OK");
+        // Display a success message
+        DisplayAlert("Configuration Saved", "Folder paths have been successfully saved.", "OK");
     }
 }
