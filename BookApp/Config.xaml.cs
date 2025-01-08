@@ -12,14 +12,33 @@ public partial class ConfigPage : ContentPage
     public ConfigPage()
     {
         Title = "Configuration";
+        const string DefaultFolderName = "MyAppData";
 
-        // Initialize entries
+        // Build the default paths for text files and sound files
+        string defaultTextFilesPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DefaultFolderName, "TextFiles");
+        string defaultSoundFilesPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DefaultFolderName, "SoundFiles");
+        string defaultEpubPath;
+
+        // Handle platform-specific default paths
+#if ANDROID
+        defaultEpubPath = Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Download");
+#else
+        defaultEpubPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+#endif
+
+        // Ensure the folders exist
+        Directory.CreateDirectory(defaultTextFilesPath);
+        Directory.CreateDirectory(defaultSoundFilesPath);
+
+        // Initialize the Entry fields
         _textFilesPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for text files" }
-            .Text(Preferences.Get("TextFilesPath", FileSystem.AppDataDirectory + "/TextFiles"));
+            .Text(Preferences.Get("TextFilesPath", defaultTextFilesPath));
         _soundFilesPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for sound files" }
-            .Text(Preferences.Get("SoundFilesPath", FileSystem.AppDataDirectory + "/SoundFiles"));
+            .Text(Preferences.Get("SoundFilesPath", defaultSoundFilesPath));
         _epubDefaultPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for ePub files" }
-            .Text(Preferences.Get("EpubDefaultPath", FileSystem.AppDataDirectory + "/ePubFiles"));
+            .Text(Preferences.Get("EpubDefaultPath", defaultEpubPath));
 
         Content = new VerticalStackLayout
         {
