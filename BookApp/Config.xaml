@@ -3,10 +3,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BookApp.ConfigPage"
              Title="ConfigPage">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+    
+    <VerticalStackLayout Padding="20" Spacing="15">
+
+        <Label Text="Text Files Path" />
+        <Entry x:Name="TextFilesPathEntry" Placeholder="Select folder for text files" IsReadOnly="True" />
+        <Button Text="Choose Text Path" Clicked="OnTextFilesPathClicked" />
+
+        <Label Text="Sound Files Path" />
+        <Entry x:Name="SoundFilesPathEntry" Placeholder="Select folder for sound files" IsReadOnly="True" />
+        <Button Text="Choose Sound Path" Clicked="OnSoundFilesPathClicked" />
+
+        <Label Text="ePub Default Path" />
+        <Entry x:Name="EpubDefaultPathEntry" Placeholder="Select folder for ePub files" IsReadOnly="True" />
+        <Button Text="Choose ePub Path" Clicked="OnEpubPathClicked" />
+
+        <Button Text="Save Configuration" Clicked="OnSaveConfigClicked" BackgroundColor="Green" TextColor="White" />
     </VerticalStackLayout>
 </ContentPage>

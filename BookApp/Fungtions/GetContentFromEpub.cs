@@ -8,5 +8,6 @@ namespace BookApp.Fungtions
 {
     public class GetContentFromEpub
     {
+       
     }
 }
