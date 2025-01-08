@@ -7,9 +7,59 @@
     Shell.FlyoutBehavior="Flyout"
     Title="BookApp">
 
-    <ShellContent
+    <!--<ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Route="MainPage" />-->
+    <!-- Flyout Menu with various pages -->
+    
+    <FlyoutItem Title="Main">
+        <ShellContent
+            Title="Home"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+        <ShellContent Title="Audio Epub">
+            <local:AudioEpubPage />
+        </ShellContent>
+        <ShellContent Title="Audio Text">
+            <local:AudioTextPage />
+        </ShellContent>
+        <ShellContent Title="Library">
+            <local:LibraryPage />
+        </ShellContent>
+        <ShellContent Title="RSS Feed">
+            <local:RssFeedPage />
+        </ShellContent>
+        <ShellContent Title="Config">
+            <local:ConfigPage />
+        </ShellContent>
+    </FlyoutItem>
+
+    <!--<FlyoutItem Title="Home">
+        <ShellContent
+            Title="Main"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Audio Epub">
+        <ShellContent Title="Audio Epub" ContentTemplate="{DataTemplate local:AudioEpubPage}" Route="AudioEpubPage"/>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Audio Text">
+        <ShellContent Title="Audio Text" ContentTemplate="{DataTemplate local:AudioTextPage}" Route="AudioTextPage"/>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Library">
+        <ShellContent Title="Library" ContentTemplate="{DataTemplate local:LibraryPage}" Route="LibraryPage"/>
+    </FlyoutItem>
+
+    <FlyoutItem Title="RSS Feed">
+        <ShellContent Title="RSS Feed" ContentTemplate="{DataTemplate local:RssFeedPage}" Route="RssFeedPage"/>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Config">
+        <ShellContent Title="Config" ContentTemplate="{DataTemplate local:ConfigPage}" Route="ConfigPage"/>
+    </FlyoutItem>-->
 
 </Shell>

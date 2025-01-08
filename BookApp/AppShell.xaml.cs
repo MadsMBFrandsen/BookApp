@@ -5,6 +5,13 @@
         public AppShell()
         {
             InitializeComponent();
+
+            // Register routes for your pages
+            Routing.RegisterRoute("AudioEpubPage", typeof(AudioEpubPage));
+            Routing.RegisterRoute("AudioTextPage", typeof(AudioTextPage));
+            Routing.RegisterRoute("LibraryPage", typeof(LibraryPage));
+            Routing.RegisterRoute("RssFeedPage", typeof(RssFeedPage));
+            Routing.RegisterRoute("ConfigPage", typeof(ConfigPage));
         }
     }
 }

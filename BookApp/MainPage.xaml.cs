@@ -1,4 +1,6 @@
-﻿namespace BookApp
+﻿global using BookApp.Models;
+
+namespace BookApp
 {
     public partial class MainPage : ContentPage
     {
