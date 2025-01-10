@@ -15,8 +15,12 @@ public partial class AudioEpubPage : ContentPage
 
     private string chosenepubtitle = string.Empty;
 
-    private ListView EpubFilePathListView;
-    private ListView StoryNameListView;
+    private List<Epub> epubs = new List<Epub>();
+    private List<Epub> epubstemp = new List<Epub>();
+
+
+    //private ListView EpubFilePathListView;
+    //private ListView StoryNameListView;
     private Button CompletedButton;
     private Button SelectEpubButton;
     private Entry StoryNameEntry;
@@ -68,7 +72,7 @@ public partial class AudioEpubPage : ContentPage
 
         StoryNameEntry = new Entry { Placeholder = "Story Name" };
         StartNumberEntry = new Entry { Placeholder = "Start Number", Text = "0", Keyboard = Keyboard.Numeric };
-        EndNumberEntry = new Entry { Placeholder = "End Number", Text = "0", Keyboard = Keyboard.Numeric };
+        EndNumberEntry = new Entry { Placeholder = "End Number", Te xt = "0", Keyboard = Keyboard.Numeric };
 
         TotalNumberLabel = new Label { Text = "Total: Na" };
         CurrentNumberLabel = new Label { Text = "Current: Na" };
@@ -114,8 +118,12 @@ public partial class AudioEpubPage : ContentPage
                 epubFilePathFrame.Row(1).RowSpan(4).Column(1).ColumnSpan(4),
 
                 TotalNumberLabel.Row(2).Column(6).ColumnSpan(2),
+                new Label { Text = "Start Number" }.Row(2).Column(8),
+                StartNumberEntry.Row(2).Column(9),               
 
                 CurrentNumberLabel.Row(3).Column(6).ColumnSpan(2),
+                new Label { Text = "End Number" }.Row(3).Column(8),
+                EndNumberEntry.Row(3).Column(9),
 
                 TimeLeftLabel.Row(4).Column(6).ColumnSpan(2),
                 keepNumbersLayout.Row(4).Column(8),
