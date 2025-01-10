@@ -10,8 +10,10 @@ namespace BookApp;
 
 public partial class AudioEpubPage : ContentPage
 {
-    private ObservableCollection<string> Epubs { get; set; } = new ObservableCollection<string>();
-    private ObservableCollection<string> EpubsStorynames { get; set; } = new ObservableCollection<string>();
+    private ObservableCollection<string> EpubsObList { get; set; } = new ObservableCollection<string>();
+    private ObservableCollection<string> EpubsStorynamesObList { get; set; } = new ObservableCollection<string>();
+
+    private string chosenepubtitle = string.Empty;
 
     private ListView EpubFilePathListView;
     private ListView StoryNameListView;
@@ -41,7 +43,7 @@ public partial class AudioEpubPage : ContentPage
             Padding = 0,
             Content = new ListView
             {
-                ItemsSource = Epubs,
+                ItemsSource = EpubsObList,
                 Margin = new Thickness(5)
             }
         };
@@ -53,7 +55,7 @@ public partial class AudioEpubPage : ContentPage
             Padding = 0,
             Content = new ListView
             {
-                ItemsSource = EpubsStorynames,
+                ItemsSource = EpubsStorynamesObList,
                 Margin = new Thickness(5)
             }
         };
@@ -153,8 +155,8 @@ public partial class AudioEpubPage : ContentPage
         if (result != null)
         {
             string fileNameWithoutUnderscores = result.FileName.Replace("_", " ");
-            Epubs.Add(result.FileName); // Change to Without _ 
-            EpubsStorynames.Add(fileNameWithoutUnderscores); // Change to Without _ 
+            EpubsObList.Add(result.FileName); // Change to Without _ 
+            EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
         }
     }
 
@@ -169,6 +171,7 @@ public partial class AudioEpubPage : ContentPage
         if (tappedItem != null)
         {
             StoryNameEntry.Text = tappedItem; // Populate StoryNameEntry with the tapped item text
+            chosenepubtitle = tappedItem;
         }
     }
 
@@ -181,15 +184,16 @@ public partial class AudioEpubPage : ContentPage
         if (!string.IsNullOrEmpty(editedStoryName))
         {
             // Check if the current item in the ListView (before editing) exists in the collection
-            var currentStoryName = StoryNameEntry.Text;
+            var currentStoryName = chosenepubtitle;
+            //var currentStoryName = StoryNameEntry.Text;
 
             // Find the index of the current item in the ObservableCollection (ListView's source)
-            int index = EpubsStorynames.IndexOf(currentStoryName);
+            int index = EpubsStorynamesObList.IndexOf(currentStoryName);
 
             if (index >= 0)
             {
                 // Update the item in the ObservableCollection with the new edited value
-                EpubsStorynames[index] = editedStoryName;  // This will automatically refresh the ListView
+                EpubsStorynamesObList[index] = editedStoryName.Trim();  // This will automatically refresh the ListView
             }
 
             // Optionally, display a success message after saving
@@ -201,4 +205,61 @@ public partial class AudioEpubPage : ContentPage
             await DisplayAlert("Error", "Please enter a valid story name", "OK");
         }
     }
+
+
+    //this is what works 
+
+    //private void LVStoryname_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    //{
+    //    // Update the text box with the selected item
+    //    if (LVStoryname.SelectedItem != null)
+    //    {
+    //        StorynameTB.Text = LVStoryname.SelectedItem.ToString();
+    //        chosenepubtitle = StorynameTB.Text;
+
+    //        foreach (Epub x in GEpubs)
+    //        {
+    //            if (chosenepubtitle == x.Title)
+    //            {
+    //                StartNumberTB.Text = x.StartNumber.ToString();
+    //                EndNumberTB.Text = x.EndNumber.ToString();
+    //            }
+    //        }
+    //    }
+    //}
+
+    //private void UpdateButton_Click(object sender, RoutedEventArgs e)
+    //{
+    //    //List<Chapter> tempchapterlist = new();
+    //    List<Epub> tempepub = new();
+    //    // Update the selected item with the value from the text box
+    //    if (LVStoryname.SelectedItem != null)
+    //    {
+    //        items[LVStoryname.SelectedIndex] = StorynameTB.Text;
+
+    //        foreach (Epub x in GEpubs)
+    //        {
+    //            if (chosenepubtitle == x.Title)
+    //            {
+    //                Epub ep = new();
+    //                ep.FileName = x.FileName;
+    //                ep.Title = StorynameTB.Text.Trim();
+    //                ep.StartNumber = Convert.ToInt32(StartNumberTB.Text);
+    //                ep.EndNumber = Convert.ToInt32(EndNumberTB.Text);
+    //                ep.Author = x.Author;
+
+    //                tempepub.Add(ep);
+    //            }
+    //            else
+    //            {
+    //                tempepub.Add(x);
+    //            }
+    //        }
+    //        GEpubs = tempepub;
+
+    //        StartNumberTB.Text = "0";
+    //        EndNumberTB.Text = "0";
+    //    }
+
+    //}
 }
