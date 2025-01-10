@@ -10,7 +10,8 @@ namespace BookApp;
 
 public partial class AudioEpubPage : ContentPage
 {
-    private ObservableCollection<string> Items { get; set; } = new ObservableCollection<string>();
+    private ObservableCollection<string> Epubs { get; set; } = new ObservableCollection<string>();
+    private ObservableCollection<string> EpubsStorynames { get; set; } = new ObservableCollection<string>();
 
     private ListView EpubFilePathListView;
     private ListView StoryNameListView;
@@ -25,7 +26,7 @@ public partial class AudioEpubPage : ContentPage
     private Label CurrentEpubLabel;
     private Label ChapterNameLabel;
     private Label ErrorLabel;
-    private CheckBox KeepNumbersCheckBox;
+    private CheckBox KeepNumbersCheckBox; // Declare the CheckBox here
     private Button SaveButton;
 
     public AudioEpubPage()
@@ -40,7 +41,7 @@ public partial class AudioEpubPage : ContentPage
             Padding = 0,
             Content = new ListView
             {
-                ItemsSource = Items,
+                ItemsSource = Epubs,
                 Margin = new Thickness(5)
             }
         };
@@ -52,7 +53,7 @@ public partial class AudioEpubPage : ContentPage
             Padding = 0,
             Content = new ListView
             {
-                ItemsSource = Items,
+                ItemsSource = EpubsStorynames,
                 Margin = new Thickness(5)
             }
         };
@@ -74,13 +75,16 @@ public partial class AudioEpubPage : ContentPage
         ChapterNameLabel = new Label { Text = "Chapter Name: Na" };
         ErrorLabel = new Label { Text = "Error", TextColor = Colors.Red };
 
+        // Create and initialize the KeepNumbersCheckBox properly
+        KeepNumbersCheckBox = new CheckBox { IsChecked = true };
+
         // CheckBox with accompanying Label
         var keepNumbersLayout = new HorizontalStackLayout
         {
             Spacing = 10,
             Children =
             {
-                new CheckBox { IsChecked = true },
+                KeepNumbersCheckBox,
                 new Label { Text = "Keep Numbers", VerticalOptions = LayoutOptions.Center }
             }
         };
@@ -92,7 +96,8 @@ public partial class AudioEpubPage : ContentPage
         var storyNameListView = storyNameFrame.Content as ListView;
         storyNameListView.ItemTapped += async (s, e) =>
         {
-            await OnStoryNameItemTapped(e.Item as string);
+            var tappedItem = e.Item as string;
+            await OnStoryNameItemTapped(tappedItem);
         };
 
         Content = new Grid
@@ -144,14 +149,13 @@ public partial class AudioEpubPage : ContentPage
             FileTypes = customEpubFileType
         };
 
-
         var result = await FilePicker.Default.PickAsync(options);
         if (result != null)
         {
-            Items.Add(result.FileName);
+            string fileNameWithoutUnderscores = result.FileName.Replace("_", " ");
+            Epubs.Add(result.FileName); // Change to Without _ 
+            EpubsStorynames.Add(fileNameWithoutUnderscores); // Change to Without _ 
         }
-
-
     }
 
     private async Task CompleteTask()
@@ -180,12 +184,12 @@ public partial class AudioEpubPage : ContentPage
             var currentStoryName = StoryNameEntry.Text;
 
             // Find the index of the current item in the ObservableCollection (ListView's source)
-            int index = Items.IndexOf(currentStoryName);
+            int index = EpubsStorynames.IndexOf(currentStoryName);
 
             if (index >= 0)
             {
                 // Update the item in the ObservableCollection with the new edited value
-                Items[index] = editedStoryName;  // This will automatically refresh the ListView
+                EpubsStorynames[index] = editedStoryName;  // This will automatically refresh the ListView
             }
 
             // Optionally, display a success message after saving
@@ -197,5 +201,4 @@ public partial class AudioEpubPage : ContentPage
             await DisplayAlert("Error", "Please enter a valid story name", "OK");
         }
     }
-
 }
