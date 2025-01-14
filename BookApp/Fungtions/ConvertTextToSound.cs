@@ -7,10 +7,11 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
+using System.Speech.Synthesis;
 
 namespace BookApp.Fungtions
 {
-    internal class ConvertTextToSound
+    public class ConvertTextToSound
     {
         public async Task<bool> CreateSoundFileAsync(Chapter chapter, string storyName, string path)
         {
@@ -21,27 +22,62 @@ namespace BookApp.Fungtions
 
             await Task.Run(() =>
             {
-                // Initialize platform-specific text-to-speech synthesis
-                var synthesizer = new TextToSpeechService();
-
-                using (var memoryStream = new MemoryStream())
+                if (OperatingSystem.IsWindows())
                 {
-                    // Generate the audio as a WAV file
-                    synthesizer.SpeakToWaveStream(chapter.Content, memoryStream);
-
-                    var filePath = Path.Combine(storyDirectory, chapter.Title + ".mp3");
-
-                    if (!File.Exists(filePath))
+                    // Windows-specific implementation using SpeechSynthesizer
+                    using (SpeechSynthesizer reader = new())
                     {
-                        // Convert WAV to MP3
-                        ConvertWavStreamToMp3File(memoryStream, filePath);
-                        fileCreated = true;
+                        reader.Volume = 100;
+                        reader.Rate = 0; // Medium speed
+
+                        // Select the desired voice (e.g., "Microsoft Zira Desktop")
+                        foreach (var voice in reader.GetInstalledVoices())
+                        {
+                            if (voice.VoiceInfo.Name == "Microsoft Zira Desktop")
+                            {
+                                reader.SelectVoice(voice.VoiceInfo.Name);
+                                break;
+                            }
+                        }
+
+                        using (MemoryStream memoryStream = new())
+                        {
+                            reader.SetOutputToWaveStream(memoryStream);
+                            reader.Speak(chapter.Content);
+
+                            var filePath = Path.Combine(storyDirectory, chapter.Title + ".mp3");
+
+                            if (!File.Exists(filePath))
+                            {
+                                ConvertWavStreamToMp3File(memoryStream, filePath);
+                                fileCreated = true;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Cross-platform implementation (use a custom TextToSpeechService or library)
+                    var synthesizer = new TextToSpeechService();
+
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        synthesizer.SpeakToWaveStream(chapter.Content, memoryStream);
+
+                        var filePath = Path.Combine(storyDirectory, chapter.Title + ".mp3");
+
+                        if (!File.Exists(filePath))
+                        {
+                            ConvertWavStreamToMp3File(memoryStream, filePath);
+                            fileCreated = true;
+                        }
                     }
                 }
             });
 
             return fileCreated;
         }
+
 
         public static void ConvertWavStreamToMp3File(MemoryStream ms, string saveToFileName)
         {

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using VersOne.Epub;
 
-namespace CreateMp3FromText.Functions
+namespace BookApp.Functions
 {
     public class GetContentFromEpubFile
     {

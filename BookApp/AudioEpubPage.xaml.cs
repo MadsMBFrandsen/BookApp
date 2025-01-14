@@ -1,9 +1,12 @@
+using BookApp.Functions;
+using BookApp.Fungtions;
 using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 using System.Collections.ObjectModel;
+using System.Security.Cryptography.X509Certificates;
 using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
 namespace BookApp;
@@ -68,7 +71,7 @@ public partial class AudioEpubPage : ContentPage
         SelectEpubButton.Clicked += async (s, e) => await SelectEpub();
 
         CompletedButton = new Button { Text = "Done", BackgroundColor = Colors.Blue, TextColor = Colors.White };
-        CompletedButton.Clicked += async (s, e) => await CompleteTask();
+        CompletedButton.Clicked += async (s, e) => await MakeSound();
 
         StoryNameEntry = new Entry { Placeholder = "Story Name" };
         StartNumberEntry = new Entry { Placeholder = "Start Number", Text = "0", Keyboard = Keyboard.Numeric };
@@ -119,7 +122,7 @@ public partial class AudioEpubPage : ContentPage
 
                 TotalNumberLabel.Row(2).Column(6).ColumnSpan(2),
                 new Label { Text = "Start Number" }.Row(2).Column(8),
-                StartNumberEntry.Row(2).Column(9),               
+                StartNumberEntry.Row(2).Column(9),
 
                 CurrentNumberLabel.Row(3).Column(6).ColumnSpan(2),
                 new Label { Text = "End Number" }.Row(3).Column(8),
@@ -162,16 +165,60 @@ public partial class AudioEpubPage : ContentPage
         var result = await FilePicker.Default.PickAsync(options);
         if (result != null)
         {
+            GetContentFromEpubFile getContentFromEpubFile = new();
+            List<Chapter> chapters = getContentFromEpubFile.GetContentFromEpubFunction(result.FullPath);
+
+            Epub epubtemp = new();
+            epubtemp.Filepath = result.FullPath;
+            epubtemp.Title = NormalizeTitle(result.FileName).Trim();
+            epubtemp.Chapters = chapters;
+
+            epubs.Add(epubtemp);
+
             string fileNameWithoutUnderscores = result.FileName.Replace("_", " ");
             EpubsObList.Add(result.FileName); // Change to Without _ 
             EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
         }
     }
 
-    private async Task CompleteTask()
+    private async Task MakeSound()
     {
+        ConvertTextToSound textToSound = new();
+        const double timePerWordInSeconds = 0.005; // Adjust as needed
+
+        int totalWordsAllEpubs = epubs.Sum(epub => epub.WordCount);
+
+        foreach (Epub item in epubs)
+        {
+
+            int totalWords = totalWordsAllEpubs; // Total words in all chapters
+            //int totalWords = item.Chapters.Sum(c => c.WordCount); // Total words in all chapters
+            double totalTimeLeft = totalWords * timePerWordInSeconds; // Total time in seconds
+
+            TotalNumberLabel.Text = "Total: " + item.Chapters.Count.ToString();
+
+            foreach (Chapter c in item.Chapters)
+            {
+                string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
+
+                CurrentNumberLabel.Text = "Current: " + c.Title;
+                CurrentEpubLabel.Text = "Epub: " + item.Title;
+                ChapterNameLabel.Text = c.Title;
+                //ChapterNameLabel.Text = "Chapter: " + c.Title;
+
+                double chapterTime = c.WordCount * timePerWordInSeconds; // Time for this chapter
+                totalTimeLeft -= chapterTime; // Subtract this chapter's time from the total
+
+                TimeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
+
+                
+                await textToSound.CreateSoundFileAsync(c, item.Title, soundfilespath);
+            }
+        }
+
         await DisplayAlert("Action", "Completed", "OK");
     }
+
 
     // Set the ListView item clicked to StoryNameEntry for editing
     public async Task OnStoryNameItemTapped(string tappedItem)
@@ -191,9 +238,14 @@ public partial class AudioEpubPage : ContentPage
         // Check if the edited story name is valid (not null or empty)
         if (!string.IsNullOrEmpty(editedStoryName))
         {
-            // Check if the current item in the ListView (before editing) exists in the collection
+            // Get the current story name from the chosen title
             var currentStoryName = chosenepubtitle;
-            //var currentStoryName = StoryNameEntry.Text;
+
+            int Snum = Convert.ToInt32(StartNumberEntry.Text);
+            int Enum = Convert.ToInt32(EndNumberEntry.Text);
+
+            StartNumberEntry.Text = "0";
+            EndNumberEntry.Text = "0";
 
             // Find the index of the current item in the ObservableCollection (ListView's source)
             int index = EpubsStorynamesObList.IndexOf(currentStoryName);
@@ -201,11 +253,22 @@ public partial class AudioEpubPage : ContentPage
             if (index >= 0)
             {
                 // Update the item in the ObservableCollection with the new edited value
-                EpubsStorynamesObList[index] = editedStoryName.Trim();  // This will automatically refresh the ListView
-            }
+                EpubsStorynamesObList[index] = editedStoryName.Trim();  // Automatically refreshes the ListView
 
-            // Optionally, display a success message after saving
-            await DisplayAlert("Success", "Story name updated successfully!", "OK");
+                // Find the Epub in the epubs list and overwrite it
+                int epubIndex = epubs.FindIndex(item => NormalizeTitle(item.Title).ToLower() == NormalizeTitle(currentStoryName).ToLower());
+                if (epubIndex >= 0)
+                {
+                    // Overwrite the existing Epub with a new instance
+                    epubs[epubIndex] = new Epub
+                    {
+                        Title = editedStoryName,
+                        StartNumber = Snum,
+                        EndNumber = Enum,
+                        NeedStartNumbers = KeepNumbersCheckBox.IsChecked
+                    };
+                }
+            }
         }
         else
         {
@@ -214,60 +277,11 @@ public partial class AudioEpubPage : ContentPage
         }
     }
 
+    // Normalization function
+    private string NormalizeTitle(string title)
+    {
+        // Replace underscores with spaces, or vice versa, and convert to lowercase
+        return title.Replace("_", " ");
+    }
 
-    //this is what works 
-
-    //private void LVStoryname_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    //{
-    //    // Update the text box with the selected item
-    //    if (LVStoryname.SelectedItem != null)
-    //    {
-    //        StorynameTB.Text = LVStoryname.SelectedItem.ToString();
-    //        chosenepubtitle = StorynameTB.Text;
-
-    //        foreach (Epub x in GEpubs)
-    //        {
-    //            if (chosenepubtitle == x.Title)
-    //            {
-    //                StartNumberTB.Text = x.StartNumber.ToString();
-    //                EndNumberTB.Text = x.EndNumber.ToString();
-    //            }
-    //        }
-    //    }
-    //}
-
-    //private void UpdateButton_Click(object sender, RoutedEventArgs e)
-    //{
-    //    //List<Chapter> tempchapterlist = new();
-    //    List<Epub> tempepub = new();
-    //    // Update the selected item with the value from the text box
-    //    if (LVStoryname.SelectedItem != null)
-    //    {
-    //        items[LVStoryname.SelectedIndex] = StorynameTB.Text;
-
-    //        foreach (Epub x in GEpubs)
-    //        {
-    //            if (chosenepubtitle == x.Title)
-    //            {
-    //                Epub ep = new();
-    //                ep.FileName = x.FileName;
-    //                ep.Title = StorynameTB.Text.Trim();
-    //                ep.StartNumber = Convert.ToInt32(StartNumberTB.Text);
-    //                ep.EndNumber = Convert.ToInt32(EndNumberTB.Text);
-    //                ep.Author = x.Author;
-
-    //                tempepub.Add(ep);
-    //            }
-    //            else
-    //            {
-    //                tempepub.Add(x);
-    //            }
-    //        }
-    //        GEpubs = tempepub;
-
-    //        StartNumberTB.Text = "0";
-    //        EndNumberTB.Text = "0";
-    //    }
-
-    //}
 }
