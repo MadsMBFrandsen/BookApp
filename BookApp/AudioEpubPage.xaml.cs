@@ -72,7 +72,7 @@ public partial class AudioEpubPage : ContentPage
 
         StoryNameEntry = new Entry { Placeholder = "Story Name" };
         StartNumberEntry = new Entry { Placeholder = "Start Number", Text = "0", Keyboard = Keyboard.Numeric };
-        EndNumberEntry = new Entry { Placeholder = "End Number", Te xt = "0", Keyboard = Keyboard.Numeric };
+        EndNumberEntry = new Entry { Placeholder = "End Number", Text = "0", Keyboard = Keyboard.Numeric };
 
         TotalNumberLabel = new Label { Text = "Total: Na" };
         CurrentNumberLabel = new Label { Text = "Current: Na" };
