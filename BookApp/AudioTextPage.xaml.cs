@@ -24,7 +24,7 @@ namespace BookApp
         private Button SelectTextFolderButton;
         private Button GetStoryNameButton;
         private Button GetTxtFileButton;
-        private Label storyNameLabel, titleLabel, timeLeftLabelDisplay,chapterTitle;
+        private Label storyNameLabel, titleLabel, timeLeftLabelDisplay, chapterTitle;
         private Entry storyNameEntryField, chapterTitleEntryField;
 
         public AudioTextPage()
@@ -100,7 +100,7 @@ namespace BookApp
             var clippedEditorFrame = new Frame
             {
                 Content = chapterTextEditor,
-                HeightRequest = 200, // Set a height limit to control the visible space
+                HeightRequest = 250, // Set a height limit to control the visible space
                 BorderColor = Colors.Black,
                 BackgroundColor = Colors.White,
                 CornerRadius = 5,
@@ -141,6 +141,8 @@ namespace BookApp
             ConvertTextToSound textToSound = new();
             try
             {
+                epub.Title = storyNameEntryField.Text.Trim();
+
                 // Retrieve the sound files path from Preferences
                 string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
 
@@ -155,7 +157,7 @@ namespace BookApp
                 int totalWordsAllChapters = epub.Chapters.Sum(Ch => Ch.WordCount);
                 double totalTimeLeft = totalWordsAllChapters * timePerWordInSeconds;
 
-                timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";                
+                timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
 
                 foreach (Chapter item in epub.Chapters)
                 {
@@ -163,10 +165,19 @@ namespace BookApp
                     double chapterTime = item.WordCount * timePerWordInSeconds; // Time for this chapter
                     totalTimeLeft -= chapterTime;
 
-                    // Update the remaining time across all EPUBs
-                    timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
+                    if (epub.Chapters.Count > 1) 
+                    {
+                        // Update the remaining time across all EPUBs
+                        timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
+                    }
 
                     await textToSound.CreateSoundFileAsync(item, epub.Title, soundfilespath);
+
+                    if (epub.Chapters.Count == 1)
+                    {
+                        // Update the remaining time across all EPUBs
+                        timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
+                    }
                 }
             }
             catch (Exception ex)
@@ -214,10 +225,16 @@ namespace BookApp
                 }
 
                 epub.Chapters.Clear();  // Clear any previous chapters
+
                 epub.Chapters.Add(chapter);  // Add the single chapter
 
                 // Display file title in the Editor
                 chapterTextEditor.Text = chapter.Title;
+                //
+                string storyname = Path.GetFileName(selectedFilePath);
+                storyname.Replace(".docx", "");
+                storyname.Replace(".txt", "");
+                storyNameEntryField.Text = storyname;
 
                 // Optionally, display content of the chapter
                 contentEditor.Text = chapter.Content;
@@ -264,8 +281,8 @@ namespace BookApp
                     {
                         chapter.Content = ReadDocxFile(filePath);
                     }
-                    
-                    epub.Title = Path.GetFileName(selectedFolderPath);
+                    storyNameEntryField.Text = Path.GetFileName(selectedFolderPath);
+                    //epub.Title = Path.GetFileName(selectedFolderPath);
                     epub.Chapters.Add(chapter);
                 }
 
@@ -280,14 +297,17 @@ namespace BookApp
 
         private async Task OnGetStoryNameButtonClicked()
         {
-            // Your code to get the story name
-        }
+            // Use FolderPicker to select a folder
+            var result = await FolderPicker.PickAsync(default);
 
-        //private async Task<string> GetTimeLeft(int totalSeconds)
-        //{
-        //    var timeSpan = TimeSpan.FromSeconds(totalSeconds);
-        //    return $"{timeSpan:hh\\:mm\\:ss}";
-        //}
+            if (result == null)
+            {
+                // User canceled folder selection
+                return;
+            }
+
+            storyNameEntryField.Text = Path.GetFileName(result.Folder.Path);
+        }
 
         private string ReadDocxFile(string filePath)
         {
