@@ -13,7 +13,7 @@ namespace BookApp;
 
 public partial class AudioEpubPage : ContentPage
 {
-    private ObservableCollection<string> EpubsObList { get; set; } = new ObservableCollection<string>();
+    //private ObservableCollection<string> EpubsObList { get; set; } = new ObservableCollection<string>();
     private ObservableCollection<string> EpubsStorynamesObList { get; set; } = new ObservableCollection<string>();
 
     private string chosenepubtitle = string.Empty;
@@ -53,18 +53,18 @@ public partial class AudioEpubPage : ContentPage
             ProgressColor = Colors.Blue
         };
 
-        // Wrapping ListView with Frame for Border
-        var epubFilePathFrame = new Frame
-        {
-            BorderColor = Colors.Black,
-            CornerRadius = 5,
-            Padding = 0,
-            Content = new ListView
-            {
-                ItemsSource = EpubsObList,
-                Margin = new Thickness(5)
-            }
-        };
+        //// Wrapping ListView with Frame for Border
+        //var epubFilePathFrame = new Frame
+        //{
+        //    BorderColor = Colors.Black,
+        //    CornerRadius = 5,
+        //    Padding = 0,
+        //    Content = new ListView
+        //    {
+        //        ItemsSource = EpubsObList,
+        //        Margin = new Thickness(5)
+        //    }
+        //};
 
         var storyNameFrame = new Frame
         {
@@ -127,12 +127,8 @@ public partial class AudioEpubPage : ContentPage
 
             Children =
             {
-                //progressBar.Row(9).Column(1).ColumnSpan(8), //add it to things 
-
-
                 SelectEpubButton.Row(1).Column(6),
                 ErrorLabel.Row(1).Column(8).ColumnSpan(3),
-                //epubFilePathFrame.Row(1).RowSpan(4).Column(1).ColumnSpan(4),
                 progressBar.Row(1).Column(1).ColumnSpan(4),
 
                 TotalNumberLabel.Row(2).Column(6).ColumnSpan(2),
@@ -193,16 +189,12 @@ public partial class AudioEpubPage : ContentPage
                 epubs.Add(epubtemp);
 
                 string fileNameWithoutUnderscores = NormalizeTitle(result.FileName);
-                //string fileNameWithoutUnderscores = result.FileName.Replace("_", " ");
-                EpubsObList.Add(result.FileName); // Change to Without _ 
                 EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
             }
             else
             {
                 ErrorLabel.Text = "No Chapters In Epub";
             }
-
-
         }
     }
 
@@ -344,12 +336,6 @@ public partial class AudioEpubPage : ContentPage
                     int Snum = Convert.ToInt32(StartNumberEntry.Text);
                     int Enum = Convert.ToInt32(EndNumberEntry.Text);
 
-                    //int Snum = epubs[epubIndex].StartNumber;
-                    //int Enum = epubs[epubIndex].EndNumber;
-
-                    //StartNumberEntry.Text = Snum.ToString();
-                    //EndNumberEntry.Text = Enum.ToString();
-
                     StartNumberEntry.Text = "0";
                     EndNumberEntry.Text = "0";
 
@@ -397,8 +383,7 @@ public partial class AudioEpubPage : ContentPage
 
     private void ResetValuesAndClearLists()
     {
-        // Clear all lists
-        EpubsObList.Clear();
+        // Clear all lists        
         EpubsStorynamesObList.Clear();
         epubs.Clear();
 
