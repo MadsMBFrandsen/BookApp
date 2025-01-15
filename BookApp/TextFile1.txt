@@ -1,1 +1,1 @@
-﻿add a check in config if the pc has Microsoft Zira Desktop
+﻿
