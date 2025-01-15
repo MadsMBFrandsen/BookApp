@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Maui.Storage;
+using System.Speech.Synthesis;
 
 namespace BookApp;
 
@@ -8,11 +9,17 @@ public partial class ConfigPage : ContentPage
     private readonly Entry _textFilesPathEntry;
     private readonly Entry _soundFilesPathEntry;
     private readonly Entry _epubDefaultPathEntry;
+    private Label zilla;  // Declare the zilla label here
 
     public ConfigPage()
     {
         Title = "Configuration";
         const string DefaultFolderName = "MyAppData";
+
+        // Initialize the zilla label
+        zilla = new Label { Text = "Checking for Microsoft Zira Desktop..." };
+
+        IsMicrosoftZiraDesktopInstalled();  // Check if Microsoft Zira Desktop is installed
 
         // Build the default paths for text files and sound files
         string defaultTextFilesPath = Path.Combine(
@@ -47,6 +54,8 @@ public partial class ConfigPage : ContentPage
 
             Children =
             {
+                zilla,  // Add the zilla label to the layout
+
                 new Label { Text = "Text Files Path" },
                 _textFilesPathEntry,
                 new Button { Text = "Choose Text Path" }
@@ -109,5 +118,30 @@ public partial class ConfigPage : ContentPage
 
         // Display a success message
         DisplayAlert("Configuration Saved", "Folder paths have been successfully saved.", "OK");
+    }
+
+    private void IsMicrosoftZiraDesktopInstalled()
+    {
+        // Initialize the SpeechSynthesizer to access installed voices
+        using (var synthesizer = new SpeechSynthesizer())
+        {
+            // Get the list of installed voices
+            var installedVoices = synthesizer.GetInstalledVoices();
+
+            // Check if Microsoft Zira Desktop is installed
+            foreach (var voice in installedVoices)
+            {
+                if (voice.VoiceInfo.Name.Equals("Microsoft Zira Desktop", StringComparison.OrdinalIgnoreCase))
+                {
+                    zilla.Text = "Microsoft Zira Desktop is installed."; // Update label text when installed
+                    zilla.TextColor = Colors.Green;
+                    return; // Exit once found
+                }
+            }
+        }
+
+        // If not found, update the label text
+        zilla.Text = "Microsoft Zira Desktop is not installed.";
+        zilla.TextColor = Colors.Red;
     }
 }
