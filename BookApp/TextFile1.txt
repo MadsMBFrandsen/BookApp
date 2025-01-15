@@ -5,3 +5,4 @@
 add lodingbar when sound files is made 
 	(take the full chapter word count set it 100% and then each time a audio file is made add the % of wordcount  it is to the loadingbar)
 
+	18:13

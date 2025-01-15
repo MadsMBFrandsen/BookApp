@@ -19,28 +19,39 @@ public partial class AudioEpubPage : ContentPage
     private string chosenepubtitle = string.Empty;
 
     private List<Epub> epubs = new List<Epub>();
-    private List<Epub> epubstemp = new List<Epub>();
-
 
     //private ListView EpubFilePathListView;
     //private ListView StoryNameListView;
     private Button CompletedButton;
     private Button SelectEpubButton;
+    private Button SaveButton;
+
     private Entry StoryNameEntry;
     private Entry StartNumberEntry;
     private Entry EndNumberEntry;
+
     private Label TotalNumberLabel;
     private Label CurrentNumberLabel;
     private Label TimeLeftLabel;
     private Label CurrentEpubLabel;
     private Label ChapterNameLabel;
     private Label ErrorLabel;
+
     private CheckBox KeepNumbersCheckBox; // Declare the CheckBox here
-    private Button SaveButton;
+
+    private ProgressBar progressBar;
 
     public AudioEpubPage()
     {
         BindingContext = this;
+
+        progressBar = new ProgressBar
+        {
+            Progress = 0, // Initial progress
+            HeightRequest = 10,
+            BackgroundColor = Colors.LightGray,
+            ProgressColor = Colors.Blue
+        };
 
         // Wrapping ListView with Frame for Border
         var epubFilePathFrame = new Frame
@@ -116,9 +127,13 @@ public partial class AudioEpubPage : ContentPage
 
             Children =
             {
+                //progressBar.Row(9).Column(1).ColumnSpan(8), //add it to things 
+
+
                 SelectEpubButton.Row(1).Column(6),
                 ErrorLabel.Row(1).Column(8).ColumnSpan(3),
-                epubFilePathFrame.Row(1).RowSpan(4).Column(1).ColumnSpan(4),
+                //epubFilePathFrame.Row(1).RowSpan(4).Column(1).ColumnSpan(4),
+                progressBar.Row(1).Column(1).ColumnSpan(4),
 
                 TotalNumberLabel.Row(2).Column(6).ColumnSpan(2),
                 new Label { Text = "Start Number" }.Row(2).Column(8),
@@ -173,52 +188,115 @@ public partial class AudioEpubPage : ContentPage
             epubtemp.Title = NormalizeTitle(result.FileName).Trim();
             epubtemp.Chapters = chapters;
 
-            epubs.Add(epubtemp);
+            if (chapters.Count >= 1)
+            {
+                epubs.Add(epubtemp);
 
-            string fileNameWithoutUnderscores = result.FileName.Replace("_", " ");
-            EpubsObList.Add(result.FileName); // Change to Without _ 
-            EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
+                string fileNameWithoutUnderscores = NormalizeTitle(result.FileName);
+                //string fileNameWithoutUnderscores = result.FileName.Replace("_", " ");
+                EpubsObList.Add(result.FileName); // Change to Without _ 
+                EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
+            }
+            else
+            {
+                ErrorLabel.Text = "No Chapters In Epub";
+            }
+
+
         }
     }
 
     private async Task MakeSound()
     {
+        // Disable buttons at the start of the operation
+        CompletedButton.IsEnabled = false;
+        SelectEpubButton.IsEnabled = false;
+        SaveButton.IsEnabled = false;
+
         ConvertTextToSound textToSound = new();
-        const double timePerWordInSeconds = 0.005; // Adjust as needed
+        const double timePerWordInSeconds = 0.004;
 
+        // Calculate total words across all EPUBs for time estimation
         int totalWordsAllEpubs = epubs.Sum(epub => epub.WordCount);
+        int totalChapters = epubs.Sum(epub => epub.Chapters.Count); // Total chapters across all EPUBs
+        int processedChapters = 0; // Counter for processed chapters
 
-        foreach (Epub item in epubs)
+        // Initialize total time left based on total word count
+        double totalTimeLeft = totalWordsAllEpubs * timePerWordInSeconds; // Total time in seconds
+
+        progressBar.Progress = 0; // Reset ProgressBar
+
+        // Set the initial values for Total Chapters and Time Left
+        TotalNumberLabel.Text = "Total Chapters: " + totalChapters;
+        TimeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
+
+        // Filter out Epubs with chapters
+        int originalCount = epubs.Count; // Track the original count of epubs
+        List<Epub> validEpubs = epubs.Where(e => e.Chapters.Count > 0).ToList();
+
+        if (validEpubs.Count < originalCount) // Check if any Epub was removed
         {
+            ErrorLabel.Text = "Some Epubs were removed due to having no chapters.";
+        }
+        else
+        {
+            ErrorLabel.Text = string.Empty; // Clear the error label if nothing was removed
+        }
 
-            int totalWords = totalWordsAllEpubs; // Total words in all chapters
-            //int totalWords = item.Chapters.Sum(c => c.WordCount); // Total words in all chapters
-            double totalTimeLeft = totalWords * timePerWordInSeconds; // Total time in seconds
+        int totalToProcessChapters = 0; // Keep track of chapters to process across all EPUBs
 
-            TotalNumberLabel.Text = "Total: " + item.Chapters.Count.ToString();
+        // Track total time left across all EPUBs to update the TimeLeftLabel
+        foreach (Epub item in validEpubs)
+        {
+            // Default start and end numbers
+            int startNumber = item.StartNumber > 0 ? item.StartNumber : 1;
+            int endNumber = item.EndNumber > 0 ? item.EndNumber : item.Chapters.Count;
 
-            foreach (Chapter c in item.Chapters)
+            StartNumberEntry.Text = item.StartNumber.ToString();
+            EndNumberEntry.Text = item.EndNumber.ToString();
+
+            // Process only chapters within the specified range
+            var chaptersToProcess = item.Chapters
+                .Skip(startNumber - 1) // Skip chapters before the start number
+                .Take(endNumber - startNumber + 1); // Take chapters up to the end number
+
+            // Update total chapters to process
+            totalToProcessChapters += chaptersToProcess.Count();
+            TotalNumberLabel.Text = "Total Chapters: " + totalToProcessChapters; // Update the total chapters to process
+
+            foreach (Chapter c in chaptersToProcess)
             {
                 string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
 
                 CurrentNumberLabel.Text = "Current: " + c.Title;
                 CurrentEpubLabel.Text = "Epub: " + item.Title;
                 ChapterNameLabel.Text = c.Title;
-                //ChapterNameLabel.Text = "Chapter: " + c.Title;
 
                 double chapterTime = c.WordCount * timePerWordInSeconds; // Time for this chapter
-                totalTimeLeft -= chapterTime; // Subtract this chapter's time from the total
+                totalTimeLeft -= chapterTime;
 
+                // Update the remaining time across all EPUBs
                 TimeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
 
-                
                 await textToSound.CreateSoundFileAsync(c, item.Title, soundfilespath);
+
+                // Update progress
+                processedChapters++;
+                double progress = (double)processedChapters / totalToProcessChapters; // Update progress based on total to process
+                await progressBar.ProgressTo(progress, 250, Easing.Linear); // Smooth progress animation
             }
         }
 
+        progressBar.Progress = 1; // Ensure the ProgressBar is filled at the end
         await DisplayAlert("Action", "Completed", "OK");
-    }
 
+        // Enable buttons after the operation is completed
+        CompletedButton.IsEnabled = true;
+        SelectEpubButton.IsEnabled = true;
+        SaveButton.IsEnabled = true;
+
+        ResetValuesAndClearLists();
+    }
 
     // Set the ListView item clicked to StoryNameEntry for editing
     public async Task OnStoryNameItemTapped(string tappedItem)
@@ -227,6 +305,16 @@ public partial class AudioEpubPage : ContentPage
         {
             StoryNameEntry.Text = tappedItem; // Populate StoryNameEntry with the tapped item text
             chosenepubtitle = tappedItem;
+
+            int epubIndex = epubs.FindIndex(item => NormalizeTitle(item.Title).ToLower() == NormalizeTitle(chosenepubtitle).ToLower());
+            if (epubIndex >= 0)
+            {
+                int Snum = epubs[epubIndex].StartNumber;
+                int Enum = epubs[epubIndex].EndNumber;
+
+                StartNumberEntry.Text = Snum.ToString();
+                EndNumberEntry.Text = Enum.ToString();
+            }
         }
     }
 
@@ -241,12 +329,6 @@ public partial class AudioEpubPage : ContentPage
             // Get the current story name from the chosen title
             var currentStoryName = chosenepubtitle;
 
-            int Snum = Convert.ToInt32(StartNumberEntry.Text);
-            int Enum = Convert.ToInt32(EndNumberEntry.Text);
-
-            StartNumberEntry.Text = "0";
-            EndNumberEntry.Text = "0";
-
             // Find the index of the current item in the ObservableCollection (ListView's source)
             int index = EpubsStorynamesObList.IndexOf(currentStoryName);
 
@@ -259,14 +341,39 @@ public partial class AudioEpubPage : ContentPage
                 int epubIndex = epubs.FindIndex(item => NormalizeTitle(item.Title).ToLower() == NormalizeTitle(currentStoryName).ToLower());
                 if (epubIndex >= 0)
                 {
+                    int Snum = Convert.ToInt32(StartNumberEntry.Text);
+                    int Enum = Convert.ToInt32(EndNumberEntry.Text);
+
+                    //int Snum = epubs[epubIndex].StartNumber;
+                    //int Enum = epubs[epubIndex].EndNumber;
+
+                    //StartNumberEntry.Text = Snum.ToString();
+                    //EndNumberEntry.Text = Enum.ToString();
+
+                    StartNumberEntry.Text = "0";
+                    EndNumberEntry.Text = "0";
+
                     // Overwrite the existing Epub with a new instance
                     epubs[epubIndex] = new Epub
                     {
-                        Title = editedStoryName,
+                        Filepath = epubs[epubIndex].Filepath,
+                        Title = editedStoryName.Trim(),
+                        Description = epubs[epubIndex].Description,
+                        Author = epubs[epubIndex].Author,
+                        Chapters = epubs[epubIndex].Chapters,
                         StartNumber = Snum,
                         EndNumber = Enum,
                         NeedStartNumbers = KeepNumbersCheckBox.IsChecked
                     };
+                    if (epubs[epubIndex].Chapters.Count < 1)
+                    {
+                        // Remove the Epub from both collections
+                        EpubsStorynamesObList.RemoveAt(index);
+                        epubs.RemoveAt(epubIndex);
+
+                        // Update the ErrorLabel to indicate the removal
+                        ErrorLabel.Text = "Epub removed due to no chapters.";
+                    }
                 }
             }
         }
@@ -281,7 +388,38 @@ public partial class AudioEpubPage : ContentPage
     private string NormalizeTitle(string title)
     {
         // Replace underscores with spaces, or vice versa, and convert to lowercase
+        if (title.Contains(".epub"))
+        {
+            title = title.Replace(".epub", "");
+        }
         return title.Replace("_", " ");
+    }
+
+    private void ResetValuesAndClearLists()
+    {
+        // Clear all lists
+        EpubsObList.Clear();
+        EpubsStorynamesObList.Clear();
+        epubs.Clear();
+
+        // Reset all Entry fields
+        StoryNameEntry.Text = string.Empty;
+        StartNumberEntry.Text = "0";
+        EndNumberEntry.Text = "0";
+
+        // Reset Labels
+        TotalNumberLabel.Text = "Total: Na";
+        CurrentNumberLabel.Text = "Current: Na";
+        TimeLeftLabel.Text = "Time Left: Na";
+        CurrentEpubLabel.Text = "Current Epub: Na";
+        ChapterNameLabel.Text = "Chapter Name: Na";
+        ErrorLabel.Text = "Error";
+
+        // Reset CheckBox
+        KeepNumbersCheckBox.IsChecked = true;
+
+        // Reset ProgressBar
+        progressBar.Progress = 0;
     }
 
 }

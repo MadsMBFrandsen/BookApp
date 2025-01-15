@@ -8,6 +8,7 @@ namespace BookApp.Models
 {
     public class Chapter
     {
+        public string Filepath { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public int WordCount

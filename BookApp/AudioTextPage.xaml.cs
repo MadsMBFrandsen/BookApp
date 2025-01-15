@@ -6,4 +6,8 @@ public partial class AudioTextPage : ContentPage
 	{
 		InitializeComponent();
 	}
+
+	//add textfiles to epub and run makesoundfiles 
+	//via eather folder or file 
+
 }
