@@ -23,5 +23,6 @@ namespace BookApp.Models
             }
         }
         public bool NeedStartNumbers { get; set; } = true;
+        public bool IsProcessed { get; set; } = false;
     }
 }

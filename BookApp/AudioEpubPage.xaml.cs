@@ -75,7 +75,7 @@ public partial class AudioEpubPage : ContentPage
             await CompletedButton.ScaleTo(1.1, 50, Easing.CubicOut); // Expand
             await CompletedButton.ScaleTo(1, 50, Easing.CubicInOut); // Return to normal
 
-            await MakeSound(); 
+            await MakeSound();
         };
 
         CleanButton = new Button { Text = "Clean", BackgroundColor = Colors.Red, TextColor = Colors.White };
@@ -86,7 +86,7 @@ public partial class AudioEpubPage : ContentPage
             await CleanButton.ScaleTo(0.9, 50, Easing.CubicIn); // Shrink
             await CleanButton.ScaleTo(1.1, 50, Easing.CubicOut); // Expand
             await CleanButton.ScaleTo(1, 50, Easing.CubicInOut); // Return to normal
-                        
+
             await Task.Delay(1000);
 
             CleanButton.BackgroundColor = Colors.Red;
@@ -103,7 +103,7 @@ public partial class AudioEpubPage : ContentPage
             await SaveButton.ScaleTo(1.1, 50, Easing.CubicOut); // Expand
             await SaveButton.ScaleTo(1, 50, Easing.CubicInOut); // Return to normal
 
-            await Task.Delay(1000);
+            await Task.Delay(500);
 
             SaveButton.BackgroundColor = Colors.LightBlue;
 
@@ -184,44 +184,53 @@ public partial class AudioEpubPage : ContentPage
     private async Task SelectEpub()
     {
         var customEpubFileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-        {
-            { DevicePlatform.iOS, new[] { "org.idpf.epub-container" } }, // iOS Uniform Type Identifier (UTI)
-            { DevicePlatform.Android, new[] { "application/epub+zip" } }, // Android MIME type
-            { DevicePlatform.WinUI, new[] { ".epub" } },                 // Windows file extension
-            { DevicePlatform.MacCatalyst, new[] { "org.idpf.epub-container" } } // Mac UTI
-        });
+    {
+        { DevicePlatform.iOS, new[] { "org.idpf.epub-container" } }, // iOS Uniform Type Identifier (UTI)
+        { DevicePlatform.Android, new[] { "application/epub+zip" } }, // Android MIME type
+        { DevicePlatform.WinUI, new[] { ".epub" } },                 // Windows file extension
+        { DevicePlatform.MacCatalyst, new[] { "org.idpf.epub-container" } } // Mac UTI
+    });
 
         var options = new PickOptions
         {
-            PickerTitle = "Select an Epub File",
-            FileTypes = customEpubFileType
+            PickerTitle = "Select Epub Files",   // Custom title for the picker
+            FileTypes = customEpubFileType     // Allow only EPUB files based on custom file types
         };
 
-        var result = await FilePicker.Default.PickAsync(options);
-        if (result != null)
+        var results = await FilePicker.Default.PickMultipleAsync(options);  // Use PickMultipleAsync for multiple file selection
+
+        if (results != null && results.Any())
         {
-            GetContentFromEpubFile getContentFromEpubFile = new();
-            List<Chapter> chapters = getContentFromEpubFile.GetContentFromEpubFunction(result.FullPath);
-
-            Epub epubtemp = new();
-            epubtemp.Filepath = result.FullPath;
-            epubtemp.Title = NormalizeTitle(result.FileName).Trim();
-            epubtemp.Chapters = chapters;
-            epubtemp.EndNumber = chapters.Count;
-
-            if (chapters.Count >= 1)
+            foreach (var result in results)
             {
-                epubs.Add(epubtemp);
+                GetContentFromEpubFile getContentFromEpubFile = new();
+                List<Chapter> chapters = getContentFromEpubFile.GetContentFromEpubFunction(result.FullPath);
 
-                string fileNameWithoutUnderscores = NormalizeTitle(result.FileName);
-                EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
-            }
-            else
-            {
-                ErrorLabel.Text = "No Chapters In Epub";
+                Epub epubtemp = new();
+                epubtemp.Filepath = result.FullPath;
+                epubtemp.Title = NormalizeTitle(result.FileName).Trim();
+                epubtemp.Chapters = chapters;
+                epubtemp.EndNumber = chapters.Count;
+
+                if (chapters.Count >= 1)
+                {
+                    epubs.Add(epubtemp);
+
+                    string fileNameWithoutUnderscores = NormalizeTitle(result.FileName);
+                    EpubsStorynamesObList.Add(fileNameWithoutUnderscores); // Change to Without _ 
+                }
+                else
+                {
+                    ErrorLabel.Text = "No Chapters In Epub";
+                }
             }
         }
+        else
+        {
+            ErrorLabel.Text = "No files selected.";
+        }
     }
+
 
     private async Task MakeSound()
     {
@@ -229,6 +238,7 @@ public partial class AudioEpubPage : ContentPage
         CompletedButton.IsEnabled = false;
         SelectEpubButton.IsEnabled = false;
         SaveButton.IsEnabled = false;
+        CleanButton.IsEnabled = false;
 
         ConvertTextToSound textToSound = new();
         const double timePerWordInSeconds = 0.004;
@@ -311,6 +321,7 @@ public partial class AudioEpubPage : ContentPage
         CompletedButton.IsEnabled = true;
         SelectEpubButton.IsEnabled = true;
         SaveButton.IsEnabled = true;
+        CleanButton.IsEnabled = true;
 
         ResetValuesAndClearLists();
     }

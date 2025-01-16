@@ -26,6 +26,7 @@ namespace BookApp
         private Button GetTxtFileButton;
         private Label storyNameLabel, titleLabel, timeLeftLabelDisplay, chapterTitle;
         private Entry storyNameEntryField, chapterTitleEntryField;
+        private Button ClearButton;
 
         public AudioTextPage()
         {
@@ -48,6 +49,11 @@ namespace BookApp
             CompletedButton = new Button { Text = "Create Sound" };
             CompletedButton.Clicked += async (s, e) => await OnCreateButtonClicked();
             CompletedButton.Row(7).Column(7);
+
+            // Initialize the Clear Button
+            ClearButton = new Button { Text = "Clear", BackgroundColor = Colors.Red, TextColor = Colors.White };
+            ClearButton.Clicked += OnClearButtonClicked;
+            ClearButton.Row(8).Column(7); // Set its position in the grid
 
             // Initialize the Story Name Label
             storyNameLabel = new Label { Text = "Story Name" };
@@ -131,6 +137,7 @@ namespace BookApp
                     timeLeftLabel,
                     contentEditor,
                     chapterTitle,
+                    ClearButton,
                     CompletedButton
                 }
             }.FillHorizontal().FillVertical();
@@ -165,7 +172,7 @@ namespace BookApp
                     double chapterTime = item.WordCount * timePerWordInSeconds; // Time for this chapter
                     totalTimeLeft -= chapterTime;
 
-                    if (epub.Chapters.Count > 1) 
+                    if (epub.Chapters.Count > 1)
                     {
                         // Update the remaining time across all EPUBs
                         timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
@@ -313,6 +320,24 @@ namespace BookApp
         {
             using var document = DocX.Load(filePath);
             return document.Text;
+        }
+
+        private void OnClearButtonClicked(object sender, EventArgs e)
+        {
+            // Reset Entry fields
+            storyNameEntryField.Text = string.Empty;
+            chapterTitleEntryField.Text = string.Empty;
+
+            // Reset Editors
+            chapterTextEditor.Text = string.Empty;
+            contentEditor.Text = string.Empty;
+
+            // Reset Labels
+            timeLeftLabel.Text = "Na";
+            chapterTitle.Text = "Chapter Title";
+
+            // Clear the epub object
+            epub.Chapters.Clear();
         }
     }
 }
