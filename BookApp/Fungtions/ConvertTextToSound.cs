@@ -42,13 +42,12 @@ namespace BookApp.Fungtions
 
                         using (MemoryStream memoryStream = new())
                         {
-                            reader.SetOutputToWaveStream(memoryStream);
-                            reader.Speak(chapter.Content);
-
                             var filePath = Path.Combine(storyDirectory, chapter.Title + ".mp3");
-
                             if (!File.Exists(filePath))
                             {
+                                reader.SetOutputToWaveStream(memoryStream);
+                                reader.Speak(chapter.Content);
+
                                 ConvertWavStreamToMp3File(memoryStream, filePath);
                                 fileCreated = true;
                             }

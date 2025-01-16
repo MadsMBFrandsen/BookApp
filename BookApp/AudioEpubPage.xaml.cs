@@ -13,15 +13,12 @@ namespace BookApp;
 
 public partial class AudioEpubPage : ContentPage
 {
-    //private ObservableCollection<string> EpubsObList { get; set; } = new ObservableCollection<string>();
     private ObservableCollection<string> EpubsStorynamesObList { get; set; } = new ObservableCollection<string>();
 
     private string chosenepubtitle = string.Empty;
 
     private List<Epub> epubs = new List<Epub>();
 
-    //private ListView EpubFilePathListView;
-    //private ListView StoryNameListView;
     private Button CompletedButton;
     private Button SelectEpubButton;
     private Button SaveButton;
@@ -70,13 +67,48 @@ public partial class AudioEpubPage : ContentPage
         SelectEpubButton.Clicked += async (s, e) => await SelectEpub();
 
         CompletedButton = new Button { Text = "Done", BackgroundColor = Colors.Green, TextColor = Colors.White };
-        CompletedButton.Clicked += async (s, e) => await MakeSound();
+        CompletedButton.Clicked += async (s, e) =>
+        {
+            CompletedButton.Background = Colors.Blue;
 
-        CleanButton = new Button { Text = "Clean",  BackgroundColor = Colors.Red, TextColor = Colors.White };
-        CleanButton.Clicked += async (s, e) => await ResetValuesAndClearLists();
+            await CompletedButton.ScaleTo(0.9, 50, Easing.CubicIn); // Shrink
+            await CompletedButton.ScaleTo(1.1, 50, Easing.CubicOut); // Expand
+            await CompletedButton.ScaleTo(1, 50, Easing.CubicInOut); // Return to normal
+
+            await MakeSound(); 
+        };
+
+        CleanButton = new Button { Text = "Clean", BackgroundColor = Colors.Red, TextColor = Colors.White };
+        CleanButton.Clicked += async (s, e) =>
+        {
+            CleanButton.BackgroundColor = Colors.Blue;
+            // Animate the button (scale down and up for a "pop" effect)
+            await CleanButton.ScaleTo(0.9, 50, Easing.CubicIn); // Shrink
+            await CleanButton.ScaleTo(1.1, 50, Easing.CubicOut); // Expand
+            await CleanButton.ScaleTo(1, 50, Easing.CubicInOut); // Return to normal
+                        
+            await Task.Delay(1000);
+
+            CleanButton.BackgroundColor = Colors.Red;
+
+            await ResetValuesAndClearLists();
+        };
 
         SaveButton = new Button { Text = "Save", BackgroundColor = Colors.LightBlue, TextColor = Colors.White };
-        SaveButton.Clicked += async (s, e) => await SaveEditedStoryName();
+        SaveButton.Clicked += async (s, e) =>
+        {
+            SaveButton.BackgroundColor = Colors.Blue;
+
+            await SaveButton.ScaleTo(0.9, 50, Easing.CubicIn); // Shrink
+            await SaveButton.ScaleTo(1.1, 50, Easing.CubicOut); // Expand
+            await SaveButton.ScaleTo(1, 50, Easing.CubicInOut); // Return to normal
+
+            await Task.Delay(1000);
+
+            SaveButton.BackgroundColor = Colors.LightBlue;
+
+            await SaveEditedStoryName();
+        };
 
         StoryNameEntry = new Entry { Placeholder = "Story Name" };
         StartNumberEntry = new Entry { Placeholder = "Start Number", Text = "0", Keyboard = Keyboard.Numeric };
@@ -102,7 +134,6 @@ public partial class AudioEpubPage : ContentPage
                 new Label { Text = "Keep Numbers", VerticalOptions = LayoutOptions.Center }
             }
         };
-
 
         // Handle item tapped
         var storyNameListView = storyNameFrame.Content as ListView;
@@ -145,7 +176,7 @@ public partial class AudioEpubPage : ContentPage
                 ChapterNameLabel.Row(7).Column(7).ColumnSpan(3),
 
                 SaveButton.Row(8).RowSpan(2).Column(6),
-                CompletedButton.Row(8).RowSpan(2).Column(8).ColumnSpan(2)                
+                CompletedButton.Row(8).RowSpan(2).Column(8).ColumnSpan(2)
             }
         };
     }
@@ -176,6 +207,7 @@ public partial class AudioEpubPage : ContentPage
             epubtemp.Filepath = result.FullPath;
             epubtemp.Title = NormalizeTitle(result.FileName).Trim();
             epubtemp.Chapters = chapters;
+            epubtemp.EndNumber = chapters.Count;
 
             if (chapters.Count >= 1)
             {
@@ -398,6 +430,9 @@ public partial class AudioEpubPage : ContentPage
 
         // Reset ProgressBar
         progressBar.Progress = 0;
+
+        // Reste Buttons
+        CompletedButton.Background = Colors.Green;
     }
 
 }
