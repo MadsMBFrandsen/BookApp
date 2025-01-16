@@ -25,6 +25,7 @@ public partial class AudioEpubPage : ContentPage
     private Button CompletedButton;
     private Button SelectEpubButton;
     private Button SaveButton;
+    private Button CleanButton;
 
     private Entry StoryNameEntry;
     private Entry StartNumberEntry;
@@ -53,19 +54,6 @@ public partial class AudioEpubPage : ContentPage
             ProgressColor = Colors.Blue
         };
 
-        //// Wrapping ListView with Frame for Border
-        //var epubFilePathFrame = new Frame
-        //{
-        //    BorderColor = Colors.Black,
-        //    CornerRadius = 5,
-        //    Padding = 0,
-        //    Content = new ListView
-        //    {
-        //        ItemsSource = EpubsObList,
-        //        Margin = new Thickness(5)
-        //    }
-        //};
-
         var storyNameFrame = new Frame
         {
             BorderColor = Colors.Black,
@@ -78,11 +66,17 @@ public partial class AudioEpubPage : ContentPage
             }
         };
 
-        SelectEpubButton = new Button { Text = "Select Epub" };
+        SelectEpubButton = new Button { Text = "Select Epub", BackgroundColor = Colors.Blue, TextColor = Colors.White };
         SelectEpubButton.Clicked += async (s, e) => await SelectEpub();
 
-        CompletedButton = new Button { Text = "Done", BackgroundColor = Colors.Blue, TextColor = Colors.White };
+        CompletedButton = new Button { Text = "Done", BackgroundColor = Colors.Green, TextColor = Colors.White };
         CompletedButton.Clicked += async (s, e) => await MakeSound();
+
+        CleanButton = new Button { Text = "Clean",  BackgroundColor = Colors.Red, TextColor = Colors.White };
+        CleanButton.Clicked += async (s, e) => await ResetValuesAndClearLists();
+
+        SaveButton = new Button { Text = "Save", BackgroundColor = Colors.LightBlue, TextColor = Colors.White };
+        SaveButton.Clicked += async (s, e) => await SaveEditedStoryName();
 
         StoryNameEntry = new Entry { Placeholder = "Story Name" };
         StartNumberEntry = new Entry { Placeholder = "Start Number", Text = "0", Keyboard = Keyboard.Numeric };
@@ -109,8 +103,6 @@ public partial class AudioEpubPage : ContentPage
             }
         };
 
-        SaveButton = new Button { Text = "Save" };
-        SaveButton.Clicked += async (s, e) => await SaveEditedStoryName();
 
         // Handle item tapped
         var storyNameListView = storyNameFrame.Content as ListView;
@@ -128,8 +120,9 @@ public partial class AudioEpubPage : ContentPage
             Children =
             {
                 SelectEpubButton.Row(1).Column(6),
+                CleanButton.Row(1).Column(7),
                 ErrorLabel.Row(1).Column(8).ColumnSpan(3),
-                progressBar.Row(1).Column(1).ColumnSpan(4),
+                progressBar.Row(1).RowSpan(2).Column(1).ColumnSpan(4),
 
                 TotalNumberLabel.Row(2).Column(6).ColumnSpan(2),
                 new Label { Text = "Start Number" }.Row(2).Column(8),
@@ -152,7 +145,7 @@ public partial class AudioEpubPage : ContentPage
                 ChapterNameLabel.Row(7).Column(7).ColumnSpan(3),
 
                 SaveButton.Row(8).RowSpan(2).Column(6),
-                CompletedButton.Row(8).RowSpan(2).Column(8).ColumnSpan(2)
+                CompletedButton.Row(8).RowSpan(2).Column(8).ColumnSpan(2)                
             }
         };
     }
@@ -381,7 +374,7 @@ public partial class AudioEpubPage : ContentPage
         return title.Replace("_", " ");
     }
 
-    private void ResetValuesAndClearLists()
+    private async Task ResetValuesAndClearLists()
     {
         // Clear all lists        
         EpubsStorynamesObList.Clear();

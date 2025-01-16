@@ -118,6 +118,26 @@ namespace BookApp.Functions
             content = Regex.Replace(content, @"\s+", " ");
             content = Regex.Replace(content, @"\n{2,}", "\n");
             content = Regex.Replace(content, @"(\n\s+)|(\s+\n)", "\n");
+
+            List<string> tempcontentList = Regex.Split(content, @"(?<=[.])").ToList();
+
+            List<string> tempcontentList2 = new List<string>();
+
+            foreach (string item in tempcontentList)
+            {
+                string temp = string.Empty;
+                temp = item.Trim();
+
+                if (temp.Length >= 2)
+                {
+                    string st = temp.Trim(); ;
+                    tempcontentList2.Add(st);
+                }
+            }
+            string str = String.Join("\n", tempcontentList2);
+
+            content = str;
+
             return content.Trim();
         }
 

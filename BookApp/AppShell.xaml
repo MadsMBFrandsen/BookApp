@@ -7,13 +7,21 @@
     Shell.FlyoutBehavior="Flyout"
     Title="BookApp">
 
-    <!--<ShellContent
+    <ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />-->
-    <!-- Flyout Menu with various pages -->
+        Route="MainPage" />
+     <!--Flyout Menu with various pages--> 
     
-    <FlyoutItem Title="Main">
+    
+    
+    
+    
+    
+    
+    
+
+     <!--<FlyoutItem Title="Main">
         <ShellContent
             Title="Home"
             ContentTemplate="{DataTemplate local:MainPage}"
@@ -33,7 +41,20 @@
         <ShellContent Title="Config">
             <local:ConfigPage />
         </ShellContent>
-    </FlyoutItem>
+    </FlyoutItem>--> 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     <!--<FlyoutItem Title="Home">
         <ShellContent
