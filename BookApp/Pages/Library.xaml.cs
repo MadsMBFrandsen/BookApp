@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using VersOne.Epub;
 using BookApp.Functions;
+using BookApp.Fungtions;
 
 namespace BookApp
 {
@@ -36,9 +37,18 @@ namespace BookApp
             set => SetProperty(ref currentFile, value);
         }
 
+        private bool areButtonsEnabled = true;
+        public bool AreButtonsEnabled
+        {
+            get => areButtonsEnabled;
+            set => SetProperty(ref areButtonsEnabled, value);
+        }
+
+
         public ObservableCollection<LibraryBook> Books { get; set; } = new();
 
         GetContentFromEpubFile fromEpubFile = new();
+        ConvertTextToSound toSound = new();
 
         private readonly string downloadsPath;
         private readonly string libraryFolderPath;
@@ -87,6 +97,7 @@ namespace BookApp
                     BackgroundColor = Colors.Transparent, // Correct color reference
                     Content = new Button { Text = "Load EPUBs" }
                         .BindCommand(nameof(LoadEpubsCommand), source: this)
+                        //.Bind(Button.IsEnabledProperty, nameof(AreButtonsEnabled)),
                 },
 
                 new Frame
@@ -96,6 +107,7 @@ namespace BookApp
                     BackgroundColor = Colors.Transparent, // Correct color reference
                     Content = new Button { Text = "Load Library" }
                         .BindCommand(nameof(LoadLibraryCommand), source: this)
+                        //.Bind(Button.IsEnabledProperty, nameof(AreButtonsEnabled)),
                 },
 
                 new Frame
@@ -104,51 +116,60 @@ namespace BookApp
                     BorderColor = Colors.Gray, // Correct color reference
                     BackgroundColor = Colors.Transparent, // Correct color reference
                     Content = new CollectionView
-{
-    ItemsSource = Books,
-    ItemTemplate = new DataTemplate(() =>
-    {
-        var titleLabel = new Label { FontSize = 16 }.Bind(Label.TextProperty, "Title");
-        var firstChapterLabel = new Label { FontSize = 12 }.Bind(Label.TextProperty, "FirstChapter");
-        var lastChapterLabel = new Label { FontSize = 12 }.Bind(Label.TextProperty, "LastChapter");
-        var chapterCountLabel = new Label { FontSize = 12 }.Bind(Label.TextProperty, "ChaptersCount");
-        var actionButton = new Button { Text = "Details" };
-        actionButton.Clicked += OnActionButtonClicked;
+                        {
+                            ItemsSource = Books,
+                            ItemTemplate = new DataTemplate(() =>
+                            {
+                                var titleLabel = new Label { FontSize = 16 }.Bind(Label.TextProperty, "Title");
+                                var firstChapterLabel = new Label { FontSize = 12 }.Bind(Label.TextProperty, "FirstChapter");
+                                var lastChapterLabel = new Label { FontSize = 12 }.Bind(Label.TextProperty, "LastChapter");
+                                var chapterCountLabel = new Label { FontSize = 12 }.Bind(Label.TextProperty, "ChaptersCount");
 
-        // Create a Frame to wrap the Grid and add borders
-        var frameWithBorder = new Frame
-        {
-            Padding = 10, // Padding inside the Frame
-            BorderColor = Colors.Gray, // Border color for the Frame
-            BackgroundColor = Colors.Transparent, // Transparent background so grid content is visible
-            CornerRadius = 10, // Optional: Rounded corners for the Frame
-            Content = new Grid
-            {
-                ColumnDefinitions =
-                {
-                    new ColumnDefinition { Width = GridLength.Star },
-                    new ColumnDefinition { Width = GridLength.Star },
-                    new ColumnDefinition { Width = GridLength.Star },
-                    new ColumnDefinition { Width = GridLength.Star },
-                    new ColumnDefinition { Width = GridLength.Auto }
-                },
-                Children =
-                {
-                    titleLabel.Row(0).Column(0),
-                    firstChapterLabel.Row(0).Column(1),
-                    lastChapterLabel.Row(0).Column(2),
-                    chapterCountLabel.Row(0).Column(3),
-                    actionButton.Row(0).Column(4)
-                }
-            }
-        };
+                                var actionButton = new Button { Text = "Details" };
+                                    //actionButton.SetBinding(Button.IsEnabledProperty, nameof(AreButtonsEnabled));
+                                    actionButton.Clicked += OnActionButtonClicked;
 
-        return frameWithBorder; // Return the Frame containing the Grid
-    })
-}
 
-                }
-            }
+                                 var generateAudioButton = new Button { Text = "Generate Audio" };
+                                    //generateAudioButton.SetBinding(Button.IsEnabledProperty, nameof(AreButtonsEnabled));
+                                    generateAudioButton.Clicked += OnGenerateAudioButtonClicked;
+
+                                // Create a Frame to wrap the Grid and add borders
+                                var frameWithBorder = new Frame
+                                {
+                                    Padding = 10, // Padding inside the Frame
+                                    BorderColor = Colors.Gray, // Border color for the Frame
+                                    BackgroundColor = Colors.Transparent, // Transparent background so grid content is visible
+                                    CornerRadius = 10, // Optional: Rounded corners for the Frame
+                                    Content = new Grid
+                                    {
+                                        ColumnDefinitions =
+                                        {
+                                            new ColumnDefinition { Width = GridLength.Star },
+                                            new ColumnDefinition { Width = GridLength.Star },
+                                            new ColumnDefinition { Width = GridLength.Star },
+                                            new ColumnDefinition { Width = GridLength.Star },
+                                            new ColumnDefinition { Width = GridLength.Auto },
+                                            new ColumnDefinition { Width = GridLength.Auto }
+                                        },
+                                        Children =
+                                        {
+                                            titleLabel.Row(0).Column(0),
+                                            firstChapterLabel.Row(0).Column(1),
+                                            lastChapterLabel.Row(0).Column(2),
+                                            chapterCountLabel.Row(0).Column(3),
+                                            actionButton.Row(0).Column(4),
+                                            generateAudioButton.Row(0).Column(5)
+                                        }
+                                    }
+                                };
+
+                                return frameWithBorder; // Return the Frame containing the Grid
+                            })
+                            }
+
+                        }
+                    }
                 }
             };
         }
@@ -169,10 +190,6 @@ namespace BookApp
             {
                 try
                 {
-                    //Epub epub = new();
-                    //var epubbooktemp = fromEpubFile.GetContentFromEpubFunction(file);
-                    //epub.Chapters = epubbooktemp;
-
                     var epubBook = await Task.Run(() => EpubReader.ReadBook(file));
                     ProcessBook(epubBook);
 
@@ -308,13 +325,28 @@ namespace BookApp
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public class LibraryBook
+        private async void OnGenerateAudioButtonClicked(object sender, EventArgs e)
         {
-            public string Title { get; set; }
-            public ObservableCollection<Chapter> Chapters { get; set; } = new();
-            public string FirstChapter { get; set; }
-            public string LastChapter { get; set; }
-            public int ChaptersCount => Chapters.Count;
+            if (sender is Button button && button.BindingContext is LibraryBook book)
+            {
+                var folderResult = await FolderPicker.Default.PickAsync(default);
+
+                if (folderResult.IsSuccessful)
+                {
+                    var folderPath = folderResult.Folder.Path;
+
+                    foreach (var chapter in book.Chapters)
+                    {
+                        await toSound.CreateSoundFileAsync(chapter, book.Title, folderPath);
+                    }
+
+                    await DisplayAlert("Success", "Audio files generated successfully!", "OK");
+                }
+                else
+                {
+                    await DisplayAlert("Error", "No folder was selected.", "OK");
+                }
+            }
         }
     }
 }
