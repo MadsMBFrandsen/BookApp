@@ -179,7 +179,6 @@ namespace BookApp
 
         private async Task LoadEpubsAsync()
         {
-
             Progress = 0;
             CurrentFile = 0;
 

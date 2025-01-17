@@ -1,5 +1,4 @@
-﻿namespace BookApp;
+﻿fix
 
-
-public partial class LibraryPage : ContentPage
-{
+OnGenerateAudioButtonClicked
+so it takes the folder and uses it insted of you having to manualy do it 
