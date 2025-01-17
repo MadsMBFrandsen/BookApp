@@ -11,11 +11,13 @@ public partial class ConfigV2 : ContentPage
     private Entry _soundFilesPathEntry;
     private Entry _epubDefaultPathEntry;
     private Entry _libraryFolderPathEntry;
+
     private Button _selectTextFolderButton;
     private Button _selectSoundFolderButton;
     private Button _selectEpubFolderButton;
     private Button _selectLibraryFolderButton;
     private Button _saveConfigButton;
+
     private Label _textFilesLabel;
     private Label _soundFilesLabel;
     private Label _epubDefaultPathLabel;
@@ -71,6 +73,7 @@ public partial class ConfigV2 : ContentPage
         // Set up the grid layout
         Content = new Grid
         {
+            Padding = new Thickness(10),
             RowDefinitions = Rows.Define(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto),
             ColumnDefinitions = Columns.Define(Star, Star, Star, Star),
             Children =
