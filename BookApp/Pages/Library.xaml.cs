@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using VersOne.Epub;
+using BookApp.Functions;
 
 namespace BookApp
 {
@@ -36,6 +37,8 @@ namespace BookApp
         }
 
         public ObservableCollection<LibraryBook> Books { get; set; } = new();
+
+        GetContentFromEpubFile fromEpubFile = new();
 
         private readonly string downloadsPath;
         private readonly string libraryFolderPath;
@@ -155,6 +158,7 @@ namespace BookApp
 
         private async Task LoadEpubsAsync()
         {
+
             Progress = 0;
             CurrentFile = 0;
 
@@ -165,6 +169,10 @@ namespace BookApp
             {
                 try
                 {
+                    //Epub epub = new();
+                    //var epubbooktemp = fromEpubFile.GetContentFromEpubFunction(file);
+                    //epub.Chapters = epubbooktemp;
+
                     var epubBook = await Task.Run(() => EpubReader.ReadBook(file));
                     ProcessBook(epubBook);
 
@@ -235,28 +243,37 @@ namespace BookApp
             {
                 var chapterTitle = Path.GetFileNameWithoutExtension(chapter.FilePath);
                 var outputPath = Path.Combine(bookFolderPath, $"{chapterTitle}.txt");
+                var title = Path.GetFileName(chapter.FilePath).Trim().Replace("_", " ");
 
-                if (!File.Exists(outputPath))
+                if (!fromEpubFile.IsValidChapter(title.ToLower()))
                 {
-                    var content = EditContent(chapter.Content);
-                    File.WriteAllText(outputPath, content);
+
                 }
-
-                var chapterObj = new Chapter
+                else
                 {
-                    Filepath = outputPath,
-                    Title = chapterTitle,
-                    Content = File.ReadAllText(outputPath)
-                };
+                    if (!File.Exists(outputPath))
+                    {
+                        var content = EditContent(chapter.Content);
+                        File.WriteAllText(outputPath, fromEpubFile.SplitOnPoint(content));
+                        //File.WriteAllText(outputPath, content);
+                    }
 
-                var book = Books.FirstOrDefault(b => b.Title == cleanedTitle);
-                if (book == null)
-                {
-                    book = new LibraryBook { Title = cleanedTitle };
-                    Books.Add(book);
+                    var chapterObj = new Chapter
+                    {
+                        Filepath = outputPath,
+                        Title = chapterTitle,
+                        Content = File.ReadAllText(outputPath)
+                    };
+
+                    var book = Books.FirstOrDefault(b => b.Title == cleanedTitle);
+                    if (book == null)
+                    {
+                        book = new LibraryBook { Title = cleanedTitle };
+                        Books.Add(book);
+                    }
+
+                    book.Chapters.Add(chapterObj);
                 }
-
-                book.Chapters.Add(chapterObj);
             }
         }
 

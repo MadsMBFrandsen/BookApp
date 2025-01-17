@@ -9,6 +9,8 @@ namespace BookApp
         public MainPage()
         {
             InitializeComponent();
+            ConfigV2 configV2 = new ConfigV2();
+
         }
 
         private async void OnAudioEpubClicked(object sender, EventArgs e)

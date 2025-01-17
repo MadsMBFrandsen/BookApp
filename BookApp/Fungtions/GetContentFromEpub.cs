@@ -48,7 +48,7 @@ namespace BookApp.Functions
             return chapters;
         }
 
-        private bool IsValidChapter(string title) =>
+        public bool IsValidChapter(string title) =>
             !(title.Contains("cover.xhtml") ||
             title.Contains("information.xhtml") || 
             title.Contains("stylesheet.xhtml") || 
@@ -112,7 +112,7 @@ namespace BookApp.Functions
             return System.Net.WebUtility.HtmlDecode(cleanedText);
         }
 
-        private string SplitOnPoint(string content)
+        public string SplitOnPoint(string content)
         {
             content = content.Trim();
             content = Regex.Replace(content, @"\s+", " ");

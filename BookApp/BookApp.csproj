@@ -74,28 +74,28 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="AudioEpubPage.xaml.cs">
+	  <Compile Update="Pages\AudioEpubPage.xaml.cs">
 	    <DependentUpon>AudioEpubPage.xaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="AudioTextPage.xaml.cs">
+	  <Compile Update="Pages\AudioTextPage.xaml.cs">
 	    <DependentUpon>AudioTextPage.xaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="AudioEpubPage.xaml">
+	  <MauiXaml Update="Pages\AudioEpubPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="AudioTextPage.xaml">
+	  <MauiXaml Update="Pages\AudioTextPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Library.xaml">
+	  <MauiXaml Update="Pages\Library.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\ConfigV2.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="RssFeed.xaml">
+	  <MauiXaml Update="Pages\RssFeed.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>
