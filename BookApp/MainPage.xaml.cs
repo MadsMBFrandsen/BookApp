@@ -1,4 +1,5 @@
 ﻿global using BookApp.Models;
+global using BookApp.Pages;
 
 namespace BookApp
 {
@@ -32,7 +33,7 @@ namespace BookApp
 
         private async void OnConfigClicked(object sender, EventArgs e)
         {
-            await Navigation.PushAsync(new ConfigPage());
+            await Navigation.PushAsync(new ConfigV2());
         }
 
 

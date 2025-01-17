@@ -1,4 +1,6 @@
-﻿namespace BookApp
+﻿using BookApp.Pages;
+
+namespace BookApp
 {
     public partial class AppShell : Shell
     {
@@ -11,7 +13,8 @@
             Routing.RegisterRoute("AudioTextPage", typeof(AudioTextPage));
             Routing.RegisterRoute("LibraryPage", typeof(LibraryPage));
             Routing.RegisterRoute("RssFeedPage", typeof(RssFeedPage));
-            Routing.RegisterRoute("ConfigPage", typeof(ConfigPage));
+            Routing.RegisterRoute("ConfigV2", typeof(ConfigV2));
+            //Routing.RegisterRoute("ConfigPage", typeof(ConfigPage));
         }
     }
 }

@@ -89,10 +89,10 @@
 	  <MauiXaml Update="AudioTextPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Config.xaml">
+	  <MauiXaml Update="Library.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Library.xaml">
+	  <MauiXaml Update="Pages\ConfigV2.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="RssFeed.xaml">

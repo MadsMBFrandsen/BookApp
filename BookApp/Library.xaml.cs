@@ -44,12 +44,12 @@ namespace BookApp
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public LibraryPage()
         {
-            ConfigPage config = new ConfigPage();
+            //ConfigPage config = new ConfigPage();
 
             downloadsPath = Preferences.Get("EpubDefaultPath", "Error");
             //libraryFolderPath = Preferences.Get("LibraryFolderPath","Error");
-            //libraryFolderPath = Preferences.Get("LibraryFolderPath", Path.Combine(FileSystem.AppDataDirectory, "MyEpubLibrary"));
-            libraryFolderPath = Preferences.Get("LibraryFolderPath", config.defaultLibraryFolderPath);
+            libraryFolderPath = Preferences.Get("LibraryFolderPath", Path.Combine(FileSystem.AppDataDirectory, "MyEpubLibrary"));
+            //libraryFolderPath = Preferences.Get("LibraryFolderPath", config.defaultLibraryFolderPath);
             Directory.CreateDirectory(libraryFolderPath);
 
             BindingContext = this;
