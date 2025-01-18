@@ -42,11 +42,11 @@ public partial class ConfigV2 : ContentPage
         // Check if Microsoft Zira Desktop is installed
         IsMicrosoftZiraDesktopInstalled();
 
-        //Set TimePerWord to calculate time for use in making soundfiles
-        if (Preferences.Get("TimePerWord", "0.004") =="0.004")
-        {
-            CalculateTimePerWord();
-        }
+        ////Set TimePerWord to calculate time for use in making soundfiles
+        //if (Preferences.Get("TimePerWord", "0.004") =="0.004")
+        //{
+        //    CalculateTimePerWord();
+        //}
         
 
         // Initialize path entries
@@ -66,12 +66,24 @@ public partial class ConfigV2 : ContentPage
         _selectLibraryFolderButton = new Button { Text = "Select Library Folder" };
         _saveConfigButton = new Button { Text = "Save Configuration", BackgroundColor = Colors.Green, TextColor = Colors.White };
 
+        _saveConfigButton = new Button { Text = "Save Configuration", BackgroundColor = Colors.Green, TextColor = Colors.White };
+
+        // New button for calculating time per word
+        var calculateTimeButton = new Button
+        {
+            Text = "Calculate Time Per Word",
+            BackgroundColor = Colors.Blue,
+            TextColor = Colors.White
+        };
+
+
         // Button click events
         _selectTextFolderButton.Clicked += async (s, e) => await OnTextFilesPathClicked();
         _selectSoundFolderButton.Clicked += async (s, e) => await OnSoundFilesPathClicked();
         _selectEpubFolderButton.Clicked += async (s, e) => await OnEpubPathClicked();
         _selectLibraryFolderButton.Clicked += async (s, e) => await OnLibraryFolderPathClicked();
         _saveConfigButton.Clicked += OnSaveConfigClicked;
+        calculateTimeButton.Clicked += OnCalculateTimeButtonClicked;
 
         // Initialize labels
         _textFilesLabel = new Label { Text = "Text Files Path" };
@@ -83,7 +95,7 @@ public partial class ConfigV2 : ContentPage
         Content = new Grid
         {
             Padding = new Thickness(10),
-            RowDefinitions = Rows.Define(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto),
+            RowDefinitions = Rows.Define(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto),
             ColumnDefinitions = Columns.Define(Star, Star, Star, Star),
             Children =
             {
@@ -104,7 +116,8 @@ public partial class ConfigV2 : ContentPage
                 _libraryFolderPathEntry.Row(4).Column(1).ColumnSpan(2),
                 _selectLibraryFolderButton.Row(4).Column(3),
 
-                _saveConfigButton.Row(5).Column(0).ColumnSpan(4),
+                calculateTimeButton.Row(5).Column(0).ColumnSpan(4), // Add the new button
+                _saveConfigButton.Row(6).Column(0).ColumnSpan(4),
             }
         };
     }
@@ -154,7 +167,7 @@ public partial class ConfigV2 : ContentPage
         Preferences.Set("LibraryFolderPath", _libraryFolderPathEntry.Text);
 
         // Display a success message
-        DisplayAlert("Configuration Saved", "Folder paths have been successfully saved.", "OK");
+        DisplayAlert("Configuration Saved", "Folder paths have been successfully saved. "+ Preferences.Get("TimePerWord", "0.004"), "OK");
     }
 
     private void IsMicrosoftZiraDesktopInstalled()
@@ -181,6 +194,15 @@ public partial class ConfigV2 : ContentPage
         _zillaStatusLabel.Text = "Microsoft Zira Desktop is not installed.";
         _zillaStatusLabel.TextColor = Colors.Red;
     }
+
+    private void OnCalculateTimeButtonClicked(object sender, EventArgs e)
+    {
+        CalculateTimePerWord();
+        DisplayAlert("Time Per Word Calculated",
+            "The time per word has been recalculated and saved as: " + Preferences.Get("TimePerWord", "0.004"),
+            "OK");
+    }
+
 
     public void CalculateTimePerWord()
     {
