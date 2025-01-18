@@ -214,6 +214,8 @@ public partial class ConfigV2 : ContentPage
             synthesizer.SpeakStarted += (sender, e) => stopwatch.Start();
             synthesizer.SpeakCompleted += (sender, e) => stopwatch.Stop();
 
+            synthesizer.Volume = 0;
+
             // Speak the text (this is a blocking call)
             synthesizer.Speak(sampleText);
 
