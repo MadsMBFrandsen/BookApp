@@ -241,7 +241,10 @@ public partial class AudioEpubPage : ContentPage
         CleanButton.IsEnabled = false;
 
         ConvertTextToSound textToSound = new();
-        const double timePerWordInSeconds = 0.004;
+
+        //const double timePerWordInSeconds = 0.004;
+
+        double timePerWordInSeconds = Convert.ToDouble(Preferences.Get("TimePerWord", "0.004"));
 
         // Calculate total words across all EPUBs for time estimation
         int totalWordsAllEpubs = epubs.Sum(epub => epub.WordCount);
@@ -444,6 +447,26 @@ public partial class AudioEpubPage : ContentPage
 
         // Reste Buttons
         CompletedButton.Background = Colors.Green;
+    }
+
+    private void Enablebutton()
+    {
+        CompletedButton.IsEnabled = true;
+        SelectEpubButton.IsEnabled = true;
+        SaveButton.IsEnabled = true;
+        CleanButton.IsEnabled = true;
+
+        //Color orginal
+    }
+
+    private void Disablebutton()
+    {
+        CompletedButton.IsEnabled = false;
+        SelectEpubButton.IsEnabled = false;
+        SaveButton.IsEnabled = false;
+        CleanButton.IsEnabled = false;
+
+        //Color Gray
     }
 
 }

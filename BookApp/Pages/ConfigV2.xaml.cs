@@ -1,5 +1,7 @@
+using BookApp.Fungtions;
 using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Maui.Storage;
+using System.Diagnostics;
 using System.Speech.Synthesis;
 using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
@@ -39,6 +41,13 @@ public partial class ConfigV2 : ContentPage
 
         // Check if Microsoft Zira Desktop is installed
         IsMicrosoftZiraDesktopInstalled();
+
+        //Set TimePerWord to calculate time for use in making soundfiles
+        if (Preferences.Get("TimePerWord", "0.004") =="0.004")
+        {
+            CalculateTimePerWord();
+        }
+        
 
         // Initialize path entries
         _textFilesPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for text files" }
@@ -171,5 +180,28 @@ public partial class ConfigV2 : ContentPage
         // If not found, update the label text
         _zillaStatusLabel.Text = "Microsoft Zira Desktop is not installed.";
         _zillaStatusLabel.TextColor = Colors.Red;
+    }
+
+    public void CalculateTimePerWord()
+    {
+        const string sampleText = "This is a sample text to calculate time per word.";
+        using (var synthesizer = new SpeechSynthesizer())
+        {
+            // Event to monitor the speaking process
+            Stopwatch stopwatch = new Stopwatch();
+            synthesizer.SpeakStarted += (sender, e) => stopwatch.Start();
+            synthesizer.SpeakCompleted += (sender, e) => stopwatch.Stop();
+
+            // Speak the text (this is a blocking call)
+            synthesizer.Speak(sampleText);
+
+            // Calculate time per word
+            var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+            var wordCount = sampleText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+
+
+            Preferences.Set("TimePerWord", wordCount > 0 ? elapsedSeconds / wordCount : 0.0);
+
+        }
     }
 }
