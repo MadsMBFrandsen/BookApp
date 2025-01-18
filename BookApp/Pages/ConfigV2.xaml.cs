@@ -219,6 +219,8 @@ public partial class ConfigV2 : ContentPage
             // Speak the text (this is a blocking call)
             synthesizer.Speak(sampleText);
 
+            synthesizer.Volume = 100;
+
             // Calculate time per word
             var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
             var wordCount = sampleText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
