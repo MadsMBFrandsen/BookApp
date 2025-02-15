@@ -32,7 +32,7 @@ public partial class ConfigV2 : ContentPage
         const string DefaultFolderName = "MyAppData";
 
         string defaultTextFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DefaultFolderName, "TextFiles");
-        string defaultSoundFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DefaultFolderName, "SoundFiles");
+        string defaultSoundFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DefaultFolderName, "SoundBooks");
         string defaultLibraryFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DefaultFolderName, "Library");
         string defaultEpubPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
@@ -47,7 +47,7 @@ public partial class ConfigV2 : ContentPage
         //{
         //    CalculateTimePerWord();
         //}
-        
+
 
         // Initialize path entries
         _textFilesPathEntry = new Entry { IsReadOnly = true, Placeholder = "Select folder for text files" }
@@ -160,6 +160,24 @@ public partial class ConfigV2 : ContentPage
 
     private void OnSaveConfigClicked(object sender, EventArgs e)
     {
+        List<string> tempListTextFilesPath = _textFilesPathEntry.Text.Split(@"\").ToList();
+        if (!tempListTextFilesPath.Last().Equals("TextFiles", StringComparison.OrdinalIgnoreCase))
+        {
+            _textFilesPathEntry.Text = Path.Combine(_textFilesPathEntry.Text, "TextFiles");
+        }
+
+        List<string> tempListSoundFilesPath = _soundFilesPathEntry.Text.Split(@"\").ToList();
+        if (!tempListSoundFilesPath.Last().Equals("SoundBooks", StringComparison.OrdinalIgnoreCase))
+        {
+            _soundFilesPathEntry.Text = Path.Combine(_soundFilesPathEntry.Text, "SoundBooks");
+        }
+
+        List<string> tempListLibraryPath = _libraryFolderPathEntry.Text.Split(@"\").ToList();
+        if (!tempListLibraryPath.Last().Equals("Library", StringComparison.OrdinalIgnoreCase))
+        {
+            _libraryFolderPathEntry.Text = Path.Combine(_libraryFolderPathEntry.Text, "Library");
+        }
+
         // Save paths to Preferences
         Preferences.Set("TextFilesPath", _textFilesPathEntry.Text);
         Preferences.Set("SoundFilesPath", _soundFilesPathEntry.Text);
@@ -167,7 +185,8 @@ public partial class ConfigV2 : ContentPage
         Preferences.Set("LibraryFolderPath", _libraryFolderPathEntry.Text);
 
         // Display a success message
-        DisplayAlert("Configuration Saved", "Folder paths have been successfully saved. "+ Preferences.Get("TimePerWord", "0.004"), "OK");
+        DisplayAlert("Configuration Saved", "Folder paths have been successfully saved. " + Preferences.Get("TimePerWord", "0.004"), "OK");
+        UpdateEntrys();
     }
 
     private void IsMicrosoftZiraDesktopInstalled()
@@ -229,5 +248,12 @@ public partial class ConfigV2 : ContentPage
             Preferences.Set("TimePerWord", wordCount > 0 ? elapsedSeconds / wordCount : 0.0);
 
         }
+    }
+
+    private void UpdateEntrys()
+    {
+        _textFilesPathEntry.Text = Preferences.Get("TextFilesPath", "Error");
+        _soundFilesPathEntry.Text = Preferences.Get("SoundFilesPath", "Error");
+        _libraryFolderPathEntry.Text = Preferences.Get("LibraryFolderPath", "Error");
     }
 }

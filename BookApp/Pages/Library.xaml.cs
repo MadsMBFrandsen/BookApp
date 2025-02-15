@@ -204,6 +204,96 @@ namespace BookApp
             await DisplayAlert("Done", "EPUBs loaded successfully!", "OK");
         }
 
+        //private void LoadLibrary()
+        //{
+        //    Books.Clear();
+
+        //    if (Directory.Exists(libraryFolderPath))
+        //    {
+        //        foreach (var bookDir in Directory.GetDirectories(libraryFolderPath))
+        //        {
+        //            var libraryBook = new LibraryBook
+        //            {
+        //                Title = Path.GetFileName(bookDir)
+        //            };
+
+        //            var chapterFiles = Directory.GetFiles(bookDir, "*.txt").OrderBy(f => f).ToList();
+        //            foreach (var chapterFile in chapterFiles)
+        //            {
+        //                var content = File.ReadAllText(chapterFile);
+        //                var chapterTitle = Path.GetFileNameWithoutExtension(chapterFile);
+
+        //                var chapter = new Chapter
+        //                {
+        //                    Filepath = chapterFile,
+        //                    Title = chapterTitle,
+        //                    Content = content
+        //                };
+
+        //                libraryBook.Chapters.Add(chapter);
+        //            }
+
+        //            // Set the first and last chapter titles
+        //            if (libraryBook.Chapters.Any())
+        //            {
+        //                libraryBook.FirstChapter = libraryBook.Chapters.First().Title;
+        //                libraryBook.LastChapter = libraryBook.Chapters.Last().Title;
+        //            }
+
+        //            Books.Add(libraryBook);
+        //        }
+        //    }
+        //}
+
+
+
+        //private void ProcessBook(EpubBook epubBook)
+        //{
+        //    string cleanedTitle = Regex.Replace(epubBook.Title, @"[^A-Za-z0-9\s]", "").Trim();
+        //    cleanedTitle = Regex.Replace(cleanedTitle, @"\s+", " ");
+
+        //    var bookFolderPath = Path.Combine(libraryFolderPath, cleanedTitle);
+        //    Directory.CreateDirectory(bookFolderPath);
+
+        //    foreach (var chapter in epubBook.ReadingOrder)
+        //    {
+        //        var chapterTitle = Path.GetFileNameWithoutExtension(chapter.FilePath);
+        //        var outputPath = Path.Combine(bookFolderPath, $"{chapterTitle}.txt");
+        //        var title = Path.GetFileName(chapter.FilePath).Trim().Replace("_", " ");
+
+        //        if (!fromEpubFile.IsValidChapter(title.ToLower()))
+        //        {
+
+        //        }
+        //        else
+        //        {
+        //            if (!File.Exists(outputPath))
+        //            {
+        //                var content = EditContent(chapter.Content);
+        //                File.WriteAllText(outputPath, fromEpubFile.SplitOnPoint(content));
+        //                //File.WriteAllText(outputPath, content);
+        //            }
+
+        //            var chapterObj = new Chapter
+        //            {
+        //                Filepath = outputPath,
+        //                Title = chapterTitle,
+        //                Content = File.ReadAllText(outputPath)
+        //            };
+
+        //            var book = Books.FirstOrDefault(b => b.Title == cleanedTitle);
+        //            if (book == null)
+        //            {
+        //                book = new LibraryBook { Title = cleanedTitle };
+        //                Books.Add(book);
+        //            }
+
+        //            book.Chapters.Add(chapterObj);
+        //        }
+        //    }
+        //}
+
+
         private void LoadLibrary()
         {
             Books.Clear();
@@ -212,39 +302,42 @@ namespace BookApp
             {
                 foreach (var bookDir in Directory.GetDirectories(libraryFolderPath))
                 {
-                    var libraryBook = new LibraryBook
-                    {
-                        Title = Path.GetFileName(bookDir)
-                    };
+                    var bookTitle = Path.GetFileName(bookDir);
+                    var zipFilePath = Path.Combine(bookDir, $"{bookTitle}.zip");
 
-                    var chapterFiles = Directory.GetFiles(bookDir, "*.txt").OrderBy(f => f).ToList();
-                    foreach (var chapterFile in chapterFiles)
+                    if (File.Exists(zipFilePath))
                     {
-                        var content = File.ReadAllText(chapterFile);
-                        var chapterTitle = Path.GetFileNameWithoutExtension(chapterFile);
+                        var libraryBook = new LibraryBook { Title = bookTitle };
 
-                        var chapter = new Chapter
+                        using (var archive = System.IO.Compression.ZipFile.OpenRead(zipFilePath))
                         {
-                            Filepath = chapterFile,
-                            Title = chapterTitle,
-                            Content = content
-                        };
+                            foreach (var entry in archive.Entries.OrderBy(e => e.Name))
+                            {
+                                using (var reader = new StreamReader(entry.Open()))
+                                {
+                                    var content = reader.ReadToEnd();
+                                    var chapter = new Chapter
+                                    {
+                                        Filepath = entry.FullName,
+                                        Title = Path.GetFileNameWithoutExtension(entry.Name),
+                                        Content = content
+                                    };
+                                    libraryBook.Chapters.Add(chapter);
+                                }
+                            }
+                        }
 
-                        libraryBook.Chapters.Add(chapter);
+                        if (libraryBook.Chapters.Any())
+                        {
+                            libraryBook.FirstChapter = libraryBook.Chapters.First().Title;
+                            libraryBook.LastChapter = libraryBook.Chapters.Last().Title;
+                        }
+
+                        Books.Add(libraryBook);
                     }
-
-                    // Set the first and last chapter titles
-                    if (libraryBook.Chapters.Any())
-                    {
-                        libraryBook.FirstChapter = libraryBook.Chapters.First().Title;
-                        libraryBook.LastChapter = libraryBook.Chapters.Last().Title;
-                    }
-
-                    Books.Add(libraryBook);
                 }
             }
         }
-
 
 
         private void ProcessBook(EpubBook epubBook)
@@ -255,43 +348,33 @@ namespace BookApp
             var bookFolderPath = Path.Combine(libraryFolderPath, cleanedTitle);
             Directory.CreateDirectory(bookFolderPath);
 
-            foreach (var chapter in epubBook.ReadingOrder)
+            var zipFilePath = Path.Combine(bookFolderPath, $"{cleanedTitle}.zip");
+
+            using (var archive = System.IO.Compression.ZipFile.Open(zipFilePath, System.IO.Compression.ZipArchiveMode.Create))
             {
-                var chapterTitle = Path.GetFileNameWithoutExtension(chapter.FilePath);
-                var outputPath = Path.Combine(bookFolderPath, $"{chapterTitle}.txt");
-                var title = Path.GetFileName(chapter.FilePath).Trim().Replace("_", " ");
-
-                if (!fromEpubFile.IsValidChapter(title.ToLower()))
+                foreach (var chapter in epubBook.ReadingOrder)
                 {
+                    var chapterTitle = Path.GetFileNameWithoutExtension(chapter.FilePath);
+                    var title = Path.GetFileName(chapter.FilePath).Trim().Replace("_", " ");
 
-                }
-                else
-                {
-                    if (!File.Exists(outputPath))
+                    if (fromEpubFile.IsValidChapter(title.ToLower()))
                     {
                         var content = EditContent(chapter.Content);
-                        File.WriteAllText(outputPath, fromEpubFile.SplitOnPoint(content));
-                        //File.WriteAllText(outputPath, content);
+                        var formattedContent = fromEpubFile.SplitOnPoint(content);
+
+                        var entry = archive.CreateEntry($"{chapterTitle}.txt");
+                        using (var writer = new StreamWriter(entry.Open()))
+                        {
+                            writer.Write(formattedContent);
+                        }
                     }
-
-                    var chapterObj = new Chapter
-                    {
-                        Filepath = outputPath,
-                        Title = chapterTitle,
-                        Content = File.ReadAllText(outputPath)
-                    };
-
-                    var book = Books.FirstOrDefault(b => b.Title == cleanedTitle);
-                    if (book == null)
-                    {
-                        book = new LibraryBook { Title = cleanedTitle };
-                        Books.Add(book);
-                    }
-
-                    book.Chapters.Add(chapterObj);
                 }
             }
+
+            var book = new LibraryBook { Title = cleanedTitle };
+            Books.Add(book);
         }
+
 
         private static string EditContent(string content)
         {
