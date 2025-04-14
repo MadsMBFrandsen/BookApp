@@ -61,12 +61,11 @@ namespace BookApp.Fungtions
 
                     using (var memoryStream = new MemoryStream())
                     {
-                        synthesizer.SpeakToWaveStream(chapter.Content, memoryStream);
-
                         var filePath = Path.Combine(storyDirectory, chapter.Title + ".mp3");
 
                         if (!File.Exists(filePath))
                         {
+                            synthesizer.SpeakToWaveStream(chapter.Content, memoryStream);
                             ConvertWavStreamToMp3File(memoryStream, filePath);
                             fileCreated = true;
                         }

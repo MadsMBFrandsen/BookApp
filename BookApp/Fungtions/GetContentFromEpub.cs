@@ -37,7 +37,7 @@ namespace BookApp.Functions
                     var chapter = new Chapter
                     {
                         Title = title,
-                        Content = CleanContent(item.Content)                        
+                        Content = CleanContent(item.Content)
                     };
                     if (chapter.WordCount > 300)
                     {
@@ -50,11 +50,11 @@ namespace BookApp.Functions
 
         public bool IsValidChapter(string title) =>
             !(title.Contains("cover.xhtml") ||
-            title.Contains("information.xhtml") || 
-            title.Contains("stylesheet.xhtml") || 
-            title.Contains("title_page.xhtml") || 
-            title.Contains("nav.xhtml") || 
-            title.Contains("introduction.xhtml"));
+              title.Contains("information.xhtml") ||
+              title.Contains("stylesheet.xhtml") ||
+              title.Contains("title_page.xhtml") ||
+              title.Contains("nav.xhtml") ||
+              title.Contains("introduction.xhtml"));
 
         private List<Chapter> ExtractChaptersFromEpub(string epubFilePath)
         {
@@ -67,7 +67,6 @@ namespace BookApp.Functions
                 ZipFile.ExtractToDirectory(epubFilePath, tempDirectory);
 
                 var xhtmlFiles = Directory.GetFiles(tempDirectory, "*.xhtml", SearchOption.AllDirectories);
-                //string tempAuthor = GetAuthorFromIntroductionOrInformation(xhtmlFiles);
 
                 foreach (var xhtmlFile in xhtmlFiles)
                 {
@@ -77,7 +76,7 @@ namespace BookApp.Functions
                         var chapter = new Chapter
                         {
                             Title = title,
-                            Content = CleanContent(File.ReadAllText(xhtmlFile))                            
+                            Content = CleanContent(File.ReadAllText(xhtmlFile))
                         };
                         chapters.Add(chapter);
                     }
@@ -97,11 +96,29 @@ namespace BookApp.Functions
 
         private string CleanContent(string content)
         {
-            var cleanedContent = CleanHtmlTags(content);
-            cleanedContent = SplitOnPoint(cleanedContent);
-            cleanedContent = RemoveExtraSpecialChars(cleanedContent);
+            content = RemoveStyleTagsAndCssBlocks(content);
+            content = RemoveInlineStyles(content);
+            content = CleanHtmlTags(content);
+            content = SplitOnPoint(content);
+            content = RemoveExtraSpecialChars(content);
+            content = LimitRepeatedCharacters(content);
+            return content;
+        }
 
-            return cleanedContent;
+        private string RemoveStyleTagsAndCssBlocks(string html)
+        {
+            // Remove <style> blocks
+            html = Regex.Replace(html, @"<style.*?>.*?</style>", "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+            // Remove divs with known CSS classes like custom-block or superchat
+            html = Regex.Replace(html, @"<div[^>]*class\s*=\s*[""']?(custom-block-wrapper|custom-block|superchat-[^""'\s>]*)[^>]*>.*?</div>", "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+            return html;
+        }
+
+        private string RemoveInlineStyles(string html)
+        {
+            return Regex.Replace(html, @"style\s*=\s*[""'].*?[""']", "", RegexOptions.IgnoreCase);
         }
 
         private string CleanHtmlTags(string html)
@@ -125,23 +142,25 @@ namespace BookApp.Functions
 
             foreach (string item in tempcontentList)
             {
-                string temp = string.Empty;
-                temp = item.Trim();
-
+                string temp = item.Trim();
                 if (temp.Length >= 2)
                 {
-                    string st = temp.Trim(); ;
-                    tempcontentList2.Add(st);
+                    tempcontentList2.Add(temp);
                 }
             }
-            string str = String.Join("\n", tempcontentList2);
 
-            content = str;
-
-            return content.Trim();
+            return String.Join("\n", tempcontentList2).Trim();
         }
 
-        private string RemoveExtraSpecialChars(string content) =>
-            Regex.Replace(content, @"([^\w\s]{2})[^\w\s]+", "$1");        
+        private string RemoveExtraSpecialChars(string content)
+        {
+            return Regex.Replace(content, @"([^\w\s]{2})[^\w\s]+", "$1");
+        }
+
+        private string LimitRepeatedCharacters(string input, int maxRepeat = 3)
+        {
+            return Regex.Replace(input, @"(\w)\1{" + maxRepeat + @",}", m => new string(m.Groups[1].Value[0], maxRepeat));
+        }
     }
+
 }

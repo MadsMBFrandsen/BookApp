@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 using System.Collections.ObjectModel;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
 namespace BookApp;
@@ -234,93 +235,88 @@ public partial class AudioEpubPage : ContentPage
 
     private async Task MakeSound()
     {
-        // Disable buttons at the start of the operation
         CompletedButton.IsEnabled = false;
         SelectEpubButton.IsEnabled = false;
         SaveButton.IsEnabled = false;
         CleanButton.IsEnabled = false;
 
         ConvertTextToSound textToSound = new();
-
-        //const double timePerWordInSeconds = 0.004;
+        string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
+        string textfilespath = Preferences.Get("TextFilesPath", "Error");
 
         double timePerWordInSeconds = Convert.ToDouble(Preferences.Get("TimePerWord", "0.004"));
+        if (timePerWordInSeconds.ToString().Length > 6)
+            timePerWordInSeconds = 0.004;
 
-        // Calculate total words across all EPUBs for time estimation
         int totalWordsAllEpubs = epubs.Sum(epub => epub.WordCount);
-        int totalChapters = epubs.Sum(epub => epub.Chapters.Count); // Total chapters across all EPUBs
-        int processedChapters = 0; // Counter for processed chapters
+        int totalChapters = epubs.Sum(epub => epub.Chapters.Count);
+        int processedChapters = 0;
+        double totalTimeLeft = totalWordsAllEpubs * timePerWordInSeconds;
 
-        // Initialize total time left based on total word count
-        double totalTimeLeft = totalWordsAllEpubs * timePerWordInSeconds; // Total time in seconds
-
-        progressBar.Progress = 0; // Reset ProgressBar
-
-        // Set the initial values for Total Chapters and Time Left
+        progressBar.Progress = 0;
         TotalNumberLabel.Text = "Total Chapters: " + totalChapters;
         TimeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
 
-        // Filter out Epubs with chapters
-        int originalCount = epubs.Count; // Track the original count of epubs
         List<Epub> validEpubs = epubs.Where(e => e.Chapters.Count > 0).ToList();
 
-        if (validEpubs.Count < originalCount) // Check if any Epub was removed
-        {
+        if (validEpubs.Count < epubs.Count)
             ErrorLabel.Text = "Some Epubs were removed due to having no chapters.";
-        }
         else
-        {
-            ErrorLabel.Text = string.Empty; // Clear the error label if nothing was removed
-        }
+            ErrorLabel.Text = string.Empty;
 
-        int totalToProcessChapters = 0; // Keep track of chapters to process across all EPUBs
+        int totalToProcessChapters = 0;
 
-        // Track total time left across all EPUBs to update the TimeLeftLabel
         foreach (Epub item in validEpubs)
         {
-            // Default start and end numbers
             int startNumber = item.StartNumber > 0 ? item.StartNumber : 1;
             int endNumber = item.EndNumber > 0 ? item.EndNumber : item.Chapters.Count;
 
             StartNumberEntry.Text = item.StartNumber.ToString();
             EndNumberEntry.Text = item.EndNumber.ToString();
 
-            // Process only chapters within the specified range
             var chaptersToProcess = item.Chapters
-                .Skip(startNumber - 1) // Skip chapters before the start number
-                .Take(endNumber - startNumber + 1); // Take chapters up to the end number
+                .Skip(startNumber - 1)
+                .Take(endNumber - startNumber + 1);
 
-            // Update total chapters to process
             totalToProcessChapters += chaptersToProcess.Count();
-            TotalNumberLabel.Text = "Total Chapters: " + totalToProcessChapters; // Update the total chapters to process
+            TotalNumberLabel.Text = "Total Chapters: " + totalToProcessChapters;
 
             foreach (Chapter c in chaptersToProcess)
             {
-                string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
-
                 CurrentNumberLabel.Text = "Current: " + c.Title;
                 CurrentEpubLabel.Text = "Epub: " + item.Title;
                 ChapterNameLabel.Text = c.Title;
 
-                double chapterTime = c.WordCount * timePerWordInSeconds; // Time for this chapter
+                double chapterTime = c.WordCount * timePerWordInSeconds;
                 totalTimeLeft -= chapterTime;
-
-                // Update the remaining time across all EPUBs
                 TimeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
 
+                // === Sound file generation ===
                 await textToSound.CreateSoundFileAsync(c, item.Title, soundfilespath);
+
+                // === Text file generation ===
+                if (textfilespath != "Error")
+                {
+                    string bookFolder = System.IO.Path.Combine(textfilespath, item.Title);
+                    Directory.CreateDirectory(bookFolder);
+
+                    string textFilePath = System.IO.Path.Combine(bookFolder, c.Title + ".txt");
+                    if (!File.Exists(textFilePath))
+                    {
+                        await File.WriteAllTextAsync(textFilePath, c.Content ?? "[No content]", Encoding.UTF8);
+                    }
+                }
 
                 // Update progress
                 processedChapters++;
-                double progress = (double)processedChapters / totalToProcessChapters; // Update progress based on total to process
-                await progressBar.ProgressTo(progress, 250, Easing.Linear); // Smooth progress animation
+                double progress = (double)processedChapters / totalToProcessChapters;
+                await progressBar.ProgressTo(progress, 250, Easing.Linear);
             }
         }
 
-        progressBar.Progress = 1; // Ensure the ProgressBar is filled at the end
+        progressBar.Progress = 1;
         await DisplayAlert("Action", "Completed", "OK");
 
-        // Enable buttons after the operation is completed
         CompletedButton.IsEnabled = true;
         SelectEpubButton.IsEnabled = true;
         SaveButton.IsEnabled = true;
@@ -328,6 +324,7 @@ public partial class AudioEpubPage : ContentPage
 
         ResetValuesAndClearLists();
     }
+
 
     // Set the ListView item clicked to StoryNameEntry for editing
     public async Task OnStoryNameItemTapped(string tappedItem)

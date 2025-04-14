@@ -65,6 +65,8 @@ namespace BookApp
             //libraryFolderPath = Preferences.Get("LibraryFolderPath", config.defaultLibraryFolderPath);
             Directory.CreateDirectory(libraryFolderPath);
 
+            File.WriteAllText(libraryFolderPath + @"\error_log.txt", ""); // Clear the log file at the start
+
             BindingContext = this;
 
             Content = new ScrollView
@@ -197,7 +199,8 @@ namespace BookApp
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlert("Error", $"Failed to process {file}: {ex.Message}", "OK");
+                    //await DisplayAlert("Error", $"Failed to process {file}: {ex.Message}", "OK");
+                    File.AppendAllText(libraryFolderPath + @"\error_log.txt", $"{DateTime.Now}: Failed to process {file}: {ex.Message}\n");
                 }
             }
 
@@ -311,7 +314,8 @@ namespace BookApp
 
                         using (var archive = System.IO.Compression.ZipFile.OpenRead(zipFilePath))
                         {
-                            foreach (var entry in archive.Entries.OrderBy(e => e.Name))
+                            //foreach (var entry in archive.Entries.OrderBy(e => e.Name))
+                            foreach (var entry in archive.Entries.OrderBy(e => ExtractNumber(e.Name)))
                             {
                                 using (var reader = new StreamReader(entry.Open()))
                                 {
@@ -352,7 +356,8 @@ namespace BookApp
 
             using (var archive = System.IO.Compression.ZipFile.Open(zipFilePath, System.IO.Compression.ZipArchiveMode.Create))
             {
-                foreach (var chapter in epubBook.ReadingOrder)
+                //foreach (var chapter in epubBook.ReadingOrder)
+                foreach (var chapter in epubBook.ReadingOrder.OrderBy(c => ExtractNumber(c.FilePath)))
                 {
                     var chapterTitle = Path.GetFileNameWithoutExtension(chapter.FilePath);
                     var title = Path.GetFileName(chapter.FilePath).Trim().Replace("_", " ");
@@ -373,6 +378,12 @@ namespace BookApp
 
             var book = new LibraryBook { Title = cleanedTitle };
             Books.Add(book);
+        }
+
+        private int ExtractNumber(string name)
+        {
+            var match = Regex.Match(name, @"\d+");
+            return match.Success ? int.Parse(match.Value) : int.MaxValue;
         }
 
 
