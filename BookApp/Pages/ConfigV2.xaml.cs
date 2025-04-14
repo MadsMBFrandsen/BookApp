@@ -178,6 +178,12 @@ public partial class ConfigV2 : ContentPage
             _libraryFolderPathEntry.Text = Path.Combine(_libraryFolderPathEntry.Text, "Library");
         }
 
+        // Ensure directories exist
+        Directory.CreateDirectory(_textFilesPathEntry.Text);
+        Directory.CreateDirectory(_soundFilesPathEntry.Text);
+        Directory.CreateDirectory(_libraryFolderPathEntry.Text);
+
+
         // Save paths to Preferences
         Preferences.Set("TextFilesPath", _textFilesPathEntry.Text);
         Preferences.Set("SoundFilesPath", _soundFilesPathEntry.Text);
