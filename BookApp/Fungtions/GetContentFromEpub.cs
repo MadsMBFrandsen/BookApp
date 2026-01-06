@@ -1,19 +1,24 @@
-﻿using System;
+﻿// GetContentFromEpub.cs
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using VersOne.Epub;
+using BookApp.Fungtions;   // for ConvertTextToSound.NormalizeForTts
+using BookApp.Models;      // <-- ensure Chapter resolves to the Models one
 
 namespace BookApp.Functions
 {
     public class GetContentFromEpubFile
     {
         public GetContentFromEpubFile() { }
+        private string epubname;
 
         public List<Chapter> GetContentFromEpubFunction(string epubFilename)
         {
+            epubname = epubFilename;
             try
             {
                 var epubBook = EpubReader.ReadBook(epubFilename);
@@ -29,15 +34,33 @@ namespace BookApp.Functions
         {
             var chapters = new List<Chapter>();
 
+            byte[] coverBytes = null;
+            try
+            {
+                if (epubBook.CoverImage != null)
+                {
+                    coverBytes = epubBook.CoverImage;
+                }
+            }
+            catch
+            {
+                // ignore cover errors, just means no image
+            }
+
             foreach (var item in epubBook.ReadingOrder)
             {
                 var title = Path.GetFileNameWithoutExtension(item.FilePath).Trim().Replace("_", " ");
-                if (IsValidChapter(title.ToLower()))
+                if (IsValidChapter(title.ToLower(), item.FilePath))
                 {
+                    string chapterNumber = ExtractFourDigitPrefix(title);
+
                     var chapter = new Chapter
                     {
                         Title = title,
-                        Content = CleanContent(item.Content)
+                        Number = chapterNumber,
+                        Content = CleanContent(item.Content),
+                        Author = epubBook.Author,
+                        CoverImage = coverBytes
                     };
                     if (chapter.WordCount > 300)
                     {
@@ -45,16 +68,30 @@ namespace BookApp.Functions
                     }
                 }
             }
+            epubname = string.Empty;
             return chapters;
         }
 
-        public bool IsValidChapter(string title) =>
+        private string ExtractFourDigitPrefix(string title)
+        {
+            // Match exactly 4 digits at the start of the string
+            var match = Regex.Match(title, @"^\d{4}");
+            return match.Success ? match.Value : string.Empty;
+        }
+
+        public bool IsValidChapter(string title,string filepath) =>
             !(title.Contains("cover.xhtml") ||
               title.Contains("information.xhtml") ||
               title.Contains("stylesheet.xhtml") ||
               title.Contains("title_page.xhtml") ||
               title.Contains("nav.xhtml") ||
-              title.Contains("introduction.xhtml"));
+              title.Contains("introduction.xhtml")) ||
+              filepath.Contains("cover.xhtml") ||
+              filepath.Contains("information.xhtml") ||
+              filepath.Contains("stylesheet.xhtml") ||
+              filepath.Contains("title_page.xhtml") ||
+              filepath.Contains("nav.xhtml") ||
+              filepath.Contains("introduction.xhtml"));
 
         private List<Chapter> ExtractChaptersFromEpub(string epubFilePath)
         {
@@ -76,7 +113,7 @@ namespace BookApp.Functions
                         var chapter = new Chapter
                         {
                             Title = title,
-                            Content = CleanContent(File.ReadAllText(xhtmlFile))
+                            Content = CleanContent(System.IO.File.ReadAllText(xhtmlFile))
                         };
                         chapters.Add(chapter);
                     }
@@ -99,9 +136,18 @@ namespace BookApp.Functions
             content = RemoveStyleTagsAndCssBlocks(content);
             content = RemoveInlineStyles(content);
             content = CleanHtmlTags(content);
+            if (!string.IsNullOrEmpty(epubname) && epubname.Contains("Caterpillar"))
+            {
+                content = RemoveSkillsBlocks(content);
+            }
             content = SplitOnPoint(content);
             content = RemoveExtraSpecialChars(content);
             content = LimitRepeatedCharacters(content);
+            content = RemoveExtraStuff(content);
+
+            // final light cleanup before TTS:
+            content = ConvertTextToSound.NormalizeForTts(content);
+
             return content;
         }
 
@@ -161,6 +207,29 @@ namespace BookApp.Functions
         {
             return Regex.Replace(input, @"(\w)\1{" + maxRepeat + @",}", m => new string(m.Groups[1].Value[0], maxRepeat));
         }
-    }
 
+        private static readonly Regex SkillsBlockRegex = new Regex(
+            @"\[SKILLS:\s*(?:\[[^\]]*\]\s*)+",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex CollapseExtraBlankLinesRegex = new Regex(
+            @"\n{3,}", RegexOptions.Compiled);
+
+        private string RemoveSkillsBlocks(string text)
+        {
+            var cleaned = SkillsBlockRegex.Replace(text, string.Empty);
+            cleaned = CollapseExtraBlankLinesRegex.Replace(cleaned, "\n\n");
+            return cleaned;
+        }
+
+        private string RemoveExtraStuff(string content)
+        {
+            string Tempcontent = content;
+            string RemoveWord = "0o0o";
+
+            Tempcontent = Tempcontent.Replace(RemoveWord, "");
+
+            return Tempcontent;
+        }
+    }
 }

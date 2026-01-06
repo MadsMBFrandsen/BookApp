@@ -2,12 +2,15 @@ using BookApp.Fungtions;
 using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Maui.Storage;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Storage;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading.Tasks;
+using UglyToad.PdfPig;
 using Xceed.Words.NET;
 using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
@@ -16,7 +19,7 @@ namespace BookApp
     public partial class AudioTextPage : ContentPage
     {
         private Entry chapterTitleEntry, storyNameEntry;
-        private Editor chapterTextEditor, contentEditor;  // Define contentEditor here
+        private Editor chapterTextEditor, contentEditor;
         private Label timeLeftLabel;
         private List<Chapter> chapters = new List<Chapter>();
         private Epub epub = new();
@@ -27,89 +30,114 @@ namespace BookApp
         private Label storyNameLabel, titleLabel, timeLeftLabelDisplay, chapterTitle;
         private Entry storyNameEntryField, chapterTitleEntryField;
         private Button ClearButton;
+
         public AudioTextPage()
         {
             // Initialize the SelectTextFolderButton
             SelectTextFolderButton = new Button { Text = "Folder", BackgroundColor = Colors.Blue, TextColor = Colors.White };
             SelectTextFolderButton.Clicked += async (s, e) => await FolderClicked();
             SelectTextFolderButton.Row(1).Column(6);
+
             // Initialize the GetTxtFileButton
-            GetTxtFileButton = new Button { Text = "Txt File" };
+            GetTxtFileButton = new Button { Text = "Txt / Docx / Pdf" };
             GetTxtFileButton.Clicked += async (s, e) => await OnGetTxtFileClicked();
             GetTxtFileButton.Row(1).Column(5);
+
             // Initialize the GetStoryNameButton
             GetStoryNameButton = new Button { Text = "Get Story Name" };
             GetStoryNameButton.Clicked += async (s, e) => await OnGetStoryNameButtonClicked();
             GetStoryNameButton.Row(3).Column(7);
+
             // Initialize the CompletedButton
             CompletedButton = new Button { Text = "Create Sound" };
             CompletedButton.Clicked += async (s, e) => await OnCreateButtonClicked();
             CompletedButton.Row(7).Column(7);
+
             // Initialize the Clear Button
             ClearButton = new Button { Text = "Clear", BackgroundColor = Colors.Red, TextColor = Colors.White };
             ClearButton.Clicked += OnClearButtonClicked;
-            ClearButton.Row(8).Column(7); // Set its position in the grid
+            ClearButton.Row(8).Column(7);
+
             // Initialize the Story Name Label
             storyNameLabel = new Label { Text = "Story Name" };
             storyNameLabel.Row(4).Column(5);
-            // Initialize the Story Name Label
+
+            // Initialize the Chapter Title Label
             chapterTitle = new Label { Text = "Chapter Title" };
             chapterTitle.Row(7).Column(5).ColumnSpan(2);
+
             // Initialize the Story Name Entry Field
             storyNameEntryField = new Entry { Placeholder = "Enter story name" };
             storyNameEntryField.Row(4).Column(6).ColumnSpan(2);
             storyNameEntryField.Assign(out storyNameEntry);
+
             // Initialize the Title Label
             titleLabel = new Label { Text = "Title" };
             titleLabel.Row(6).Column(5);
+
             // Initialize the Chapter Title Entry Field
             chapterTitleEntryField = new Entry { Placeholder = "Enter chapter title" };
             chapterTitleEntryField.Row(6).Column(6).ColumnSpan(2);
             chapterTitleEntryField.Assign(out chapterTitleEntry);
+
             // Initialize the Time Left Label
             timeLeftLabelDisplay = new Label { Text = "Time Left" };
             timeLeftLabelDisplay.Row(2).Column(6);
+
             // Initialize the Time Left Display
             timeLeftLabel = new Label { Text = "Na" };
             timeLeftLabel.Row(2).Column(7).ColumnSpan(2);
-            timeLeftLabel.Assign(out timeLeftLabel);
-            // Initialize the Chapter Text Editor
+
+            // Primary editor (top-left area)
             chapterTextEditor = new Editor
             {
                 Placeholder = "Enter chapter text here...",
                 AutoSize = EditorAutoSizeOption.TextChanges
             };
-            //chapterTextEditor.RowSpan(10).ColumnSpan(5);
-            // Initialize the Content Editor for displaying chapter content
+
+            // Viewer/editor for loaded chapter content (bottom-left row; will be wrapped in a ScrollView)
             contentEditor = new Editor
             {
                 Placeholder = "Chapter content will be displayed here",
-                AutoSize = EditorAutoSizeOption.TextChanges
+                AutoSize = EditorAutoSizeOption.TextChanges,
+                IsReadOnly = false,                 // set true if you want view-only
+                Margin = new Thickness(6)           // readability
             };
-            contentEditor.Row(10).Column(0).ColumnSpan(5);
-            // Wrap the Editor in a Frame to clip overflow
+
+            // Make the bottom row scrollable
+            var scrollableContentEditor = new ScrollView
+            {
+                Content = contentEditor,
+                Orientation = ScrollOrientation.Vertical
+            };
+            // Place it in the last (Star) row, columns 0–4
+            scrollableContentEditor.Row(9).Column(0).ColumnSpan(5);
+
+            // Wrap the top editor in a Frame to clip overflow
             var clippedEditorFrame = new Frame
             {
                 Content = chapterTextEditor,
-                HeightRequest = 250, // Set a height limit to control the visible space
+                HeightRequest = 250,
                 BorderColor = Colors.Black,
                 BackgroundColor = Colors.White,
                 CornerRadius = 5,
                 Padding = 5,
-                IsClippedToBounds = true, // This clips any overflow content
+                IsClippedToBounds = true,
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.Start
             };
-            clippedEditorFrame.RowSpan(10).ColumnSpan(5);
-            // Set up the grid layout
+            // IMPORTANT: Span rows 0–8 so row 9 stays free for the scrollable viewer
+            clippedEditorFrame.RowSpan(9).ColumnSpan(5);
+
+            // Grid layout (10 rows: indices 0..9)
             Content = new Grid
             {
                 RowDefinitions = Rows.Define(Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Star),
                 ColumnDefinitions = Columns.Define(Star, Star, Star, Star, Star, Star, Star, Star, Star, Star),
                 Children =
                 {
-                    //chapterTextEditor,
                     clippedEditorFrame,
+                    scrollableContentEditor,      // << replaces direct contentEditor placement
                     GetTxtFileButton,
                     SelectTextFolderButton,
                     storyNameLabel,
@@ -119,22 +147,23 @@ namespace BookApp
                     chapterTitleEntryField,
                     timeLeftLabelDisplay,
                     timeLeftLabel,
-                    contentEditor,
                     chapterTitle,
                     ClearButton,
                     CompletedButton
                 }
             }.FillHorizontal().FillVertical();
         }
+
         private async Task OnCreateButtonClicked()
         {
             ConvertTextToSound textToSound = new();
             try
             {
-                epub.Title = storyNameEntryField.Text.Trim();
+                epub.Title = storyNameEntryField.Text?.Trim();
+
                 // Retrieve the sound files path from Preferences
                 string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
-                // Check if the sound files path is valid
+
                 if (soundfilespath == "Error" || !Directory.Exists(soundfilespath))
                 {
                     await DisplayAlert("Error", "Invalid or missing sound files path.", "OK");
@@ -150,25 +179,24 @@ namespace BookApp
                 foreach (Chapter item in epub.Chapters)
                 {
                     chapterTitle.Text = item.Title;
-                    double chapterTime = item.WordCount * timePerWordInSeconds; // Time for this chapter
+                    double chapterTime = item.WordCount * timePerWordInSeconds;
                     totalTimeLeft -= chapterTime;
+
                     if (epub.Chapters.Count > 1)
                     {
-                        // Update the remaining time across all EPUBs
                         timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
                     }
+
                     await textToSound.CreateSoundFileAsync(item, epub.Title, soundfilespath);
 
                     if (epub.Chapters.Count == 1)
                     {
-                        // Update the remaining time across all EPUBs
                         timeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Display any errors that occur during the process
                 await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
             }
         }
@@ -177,44 +205,51 @@ namespace BookApp
         {
             try
             {
-                // Use FilePicker to select a single file (txt or docx)
                 var result = await FilePicker.PickAsync(new PickOptions
                 {
-                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>> {
-                        { DevicePlatform.iOS, new[] { "public.text" } },
-                        { DevicePlatform.Android, new[] { ".txt", ".docx" } },
-                        { DevicePlatform.WinUI, new[] { ".txt", ".docx" } },
+                    FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                    {
+                        // iOS: UTType identifiers
+                        { DevicePlatform.iOS, new[] { "public.plain-text", "org.openxmlformats.wordprocessingml.document", "com.adobe.pdf" } },
+                        // Android: MIME types (extensions also work, but MIME is most reliable)
+                        { DevicePlatform.Android, new[] { "text/plain", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/pdf" } },
+                        // Windows: file extensions
+                        { DevicePlatform.WinUI, new[] { ".txt", ".docx", ".pdf" } },
                     })
                 });
-                if (result == null)
-                {
-                    // User canceled file selection
-                    return;
-                }
-                // Get the file path
+
+                if (result == null) return;
+
                 string selectedFilePath = result.FullPath;
+
                 var chapter = new Chapter
                 {
-                    Title = Path.GetFileNameWithoutExtension(selectedFilePath)  // Use file name without extension as title
+                    Title = Path.GetFileNameWithoutExtension(selectedFilePath)
                 };
-                if (selectedFilePath.EndsWith(".txt"))
+
+                if (selectedFilePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
                 {
                     chapter.Content = await File.ReadAllTextAsync(selectedFilePath);
                 }
-                else if (selectedFilePath.EndsWith(".docx"))
+                else if (selectedFilePath.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
                 {
                     chapter.Content = ReadDocxFile(selectedFilePath);
                 }
-                epub.Chapters.Clear();  // Clear any previous chapters
-                epub.Chapters.Add(chapter);  // Add the single chapter
+                else if (selectedFilePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    chapter.Content = ReadPdfFile(selectedFilePath);
+                }
+
+                epub.Chapters.Clear();
+                epub.Chapters.Add(chapter);
+
                 // Display file title in the Editor
                 chapterTextEditor.Text = chapter.Title;
-                //
-                string storyname = Path.GetFileName(selectedFilePath);
-                storyname.Replace(".docx", "");
-                storyname.Replace(".txt", "");
-                storyNameEntryField.Text = storyname;
-                // Optionally, display content of the chapter
+
+                // Correctly set the story name without extension
+                storyNameEntryField.Text = Path.GetFileNameWithoutExtension(selectedFilePath);
+
+                // Display content
                 contentEditor.Text = chapter.Content;
             }
             catch (Exception ex)
@@ -227,37 +262,43 @@ namespace BookApp
         {
             try
             {
-                // Use FolderPicker to select a folder
                 var result = await FolderPicker.PickAsync(default);
-                if (result == null)
-                {
-                    // User canceled folder selection
-                    return;
-                }
+                if (result == null) return;
+
                 string selectedFolderPath = result.Folder.Path;
-                // Find all .txt and .docx files in the folder
+
                 var txtFiles = Directory.GetFiles(selectedFolderPath, "*.txt");
                 var docxFiles = Directory.GetFiles(selectedFolderPath, "*.docx");
-                var allFiles = txtFiles.Concat(docxFiles);
+                var pdfFiles = Directory.GetFiles(selectedFolderPath, "*.pdf");
+
+                var allFiles = txtFiles.Concat(docxFiles).Concat(pdfFiles);
+
+                epub.Chapters.Clear();
+
                 foreach (var filePath in allFiles)
                 {
                     var chapter = new Chapter
                     {
                         Title = Path.GetFileNameWithoutExtension(filePath)
                     };
-                    if (filePath.EndsWith(".txt"))
+
+                    if (filePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
                     {
                         chapter.Content = await File.ReadAllTextAsync(filePath);
                     }
-                    else if (filePath.EndsWith(".docx"))
+                    else if (filePath.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
                     {
                         chapter.Content = ReadDocxFile(filePath);
                     }
-                    storyNameEntryField.Text = Path.GetFileName(selectedFolderPath);
-                    //epub.Title = Path.GetFileName(selectedFolderPath);
+                    else if (filePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        chapter.Content = ReadPdfFile(filePath);
+                    }
+
                     epub.Chapters.Add(chapter);
                 }
-                // Update the Editor with the chapter titles
+
+                storyNameEntryField.Text = Path.GetFileName(selectedFolderPath);
                 chapterTextEditor.Text = string.Join(Environment.NewLine, epub.Chapters.Select(ch => ch.Title));
             }
             catch (Exception ex)
@@ -268,13 +309,9 @@ namespace BookApp
 
         private async Task OnGetStoryNameButtonClicked()
         {
-            // Use FolderPicker to select a folder
             var result = await FolderPicker.PickAsync(default);
-            if (result == null)
-            {
-                // User canceled folder selection
-                return;
-            }
+            if (result == null) return;
+
             storyNameEntryField.Text = Path.GetFileName(result.Folder.Path);
         }
 
@@ -284,11 +321,28 @@ namespace BookApp
             return document.Text;
         }
 
+        private string ReadPdfFile(string filePath)
+        {
+            var sb = new StringBuilder();
+
+            using (var document = PdfDocument.Open(filePath))
+            {
+                foreach (var page in document.GetPages())
+                {
+                    // PdfPig provides a reasonable linearized text output
+                    sb.AppendLine(page.Text);
+                }
+            }
+
+            return sb.ToString();
+        }
+
         private void OnClearButtonClicked(object sender, EventArgs e)
         {
             // Reset Entry fields
             storyNameEntryField.Text = string.Empty;
             chapterTitleEntryField.Text = string.Empty;
+
             // Reset Editors
             chapterTextEditor.Text = string.Empty;
             contentEditor.Text = string.Empty;

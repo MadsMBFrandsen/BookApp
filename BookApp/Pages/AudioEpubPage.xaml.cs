@@ -240,7 +240,7 @@ public partial class AudioEpubPage : ContentPage
         SaveButton.IsEnabled = false;
         CleanButton.IsEnabled = false;
 
-        ConvertTextToSound textToSound = new();
+        var textToSound = new ConvertTextToSound();
         string soundfilespath = Preferences.Get("SoundFilesPath", "Error");
         string textfilespath = Preferences.Get("TextFilesPath", "Error");
 
@@ -281,7 +281,10 @@ public partial class AudioEpubPage : ContentPage
             totalToProcessChapters += chaptersToProcess.Count();
             TotalNumberLabel.Text = "Total Chapters: " + totalToProcessChapters;
 
-            foreach (Chapter c in chaptersToProcess)
+            // SAFE folder name for story text files
+            string safeStoryFolderName = ConvertTextToSound.SafeFileName(item.Title);
+
+            foreach (Chapter c in chaptersToProcess) // Chapter from BookApp.Models
             {
                 CurrentNumberLabel.Text = "Current: " + c.Title;
                 CurrentEpubLabel.Text = "Epub: " + item.Title;
@@ -291,19 +294,20 @@ public partial class AudioEpubPage : ContentPage
                 totalTimeLeft -= chapterTime;
                 TimeLeftLabel.Text = $"Time Left: {TimeSpan.FromSeconds(totalTimeLeft):hh\\:mm\\:ss}";
 
-                // === Sound file generation ===
+                // Sound file generation
                 await textToSound.CreateSoundFileAsync(c, item.Title, soundfilespath);
 
-                // === Text file generation ===
+                // Text file generation (SAFE FILENAMES)
                 if (textfilespath != "Error")
                 {
-                    string bookFolder = System.IO.Path.Combine(textfilespath, item.Title);
-                    Directory.CreateDirectory(bookFolder);
+                    string bookFolder = System.IO.Path.Combine(textfilespath, safeStoryFolderName);
+                    System.IO.Directory.CreateDirectory(bookFolder);
 
-                    string textFilePath = System.IO.Path.Combine(bookFolder, c.Title + ".txt");
-                    if (!File.Exists(textFilePath))
+                    string safeChapterName = ConvertTextToSound.SafeFileName(c.Title);
+                    string textFilePath = System.IO.Path.Combine(bookFolder, safeChapterName + ".txt");
+                    if (!System.IO.File.Exists(textFilePath))
                     {
-                        await File.WriteAllTextAsync(textFilePath, c.Content ?? "[No content]", Encoding.UTF8);
+                        await System.IO.File.WriteAllTextAsync(textFilePath, c.Content ?? "[No content]", Encoding.UTF8);
                     }
                 }
 
@@ -324,6 +328,7 @@ public partial class AudioEpubPage : ContentPage
 
         ResetValuesAndClearLists();
     }
+
 
 
     // Set the ListView item clicked to StoryNameEntry for editing
@@ -350,6 +355,9 @@ public partial class AudioEpubPage : ContentPage
     public async Task SaveEditedStoryName()
     {
         string editedStoryName = StoryNameEntry.Text;
+        editedStoryName = System.Text.RegularExpressions.Regex.Replace(editedStoryName ?? "", @"\s+", " ").Trim();
+
+
 
         // Check if the edited story name is valid (not null or empty)
         if (!string.IsNullOrEmpty(editedStoryName))

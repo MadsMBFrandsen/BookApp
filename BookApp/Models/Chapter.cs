@@ -11,6 +11,9 @@ namespace BookApp.Models
         public string Filepath { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
+        public string Author { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
+        public byte[] CoverImage { get; set; }
         public int WordCount
         {
             get
