@@ -36,7 +36,9 @@ public partial class AudioEpubPage : ContentPage
     private Label ChapterNameLabel;
     private Label ErrorLabel;
 
-    private CheckBox KeepNumbersCheckBox; // Declare the CheckBox here
+    private CheckBox KeepNumbersCheckBox; 
+    private CheckBox CleanChapterFileNameCheckBox; 
+    private CheckBox CleanChapterStartContentCheckBox; 
 
     private ProgressBar progressBar;
 
@@ -136,6 +138,29 @@ public partial class AudioEpubPage : ContentPage
             }
         };
 
+        CleanChapterFileNameCheckBox = new CheckBox { IsChecked = false };
+
+        var cleanChapterFileNameLayout = new HorizontalStackLayout
+        {
+            Spacing = 10,
+            Children =
+            {
+                CleanChapterFileNameCheckBox,
+                new Label { Text = "Clean Filename", VerticalOptions = LayoutOptions.Center }
+            }
+        };
+
+        CleanChapterStartContentCheckBox = new CheckBox { IsChecked = false };
+
+        var cleanChapterStartContentLayout = new HorizontalStackLayout
+        {
+            Spacing = 10,
+            Children =
+            {
+                CleanChapterStartContentCheckBox,
+                new Label { Text = "Clean Content Chapter Repeat", VerticalOptions = LayoutOptions.Center }
+            }
+        };
         // Handle item tapped
         var storyNameListView = storyNameFrame.Content as ListView;
         storyNameListView.ItemTapped += async (s, e) =>
@@ -165,7 +190,11 @@ public partial class AudioEpubPage : ContentPage
                 EndNumberEntry.Row(3).Column(9),
 
                 TimeLeftLabel.Row(4).Column(6).ColumnSpan(2),
+
                 keepNumbersLayout.Row(4).Column(8),
+                // need more space
+                //cleanChapterFileNameLayout.Row(5).Column(8),
+                //cleanChapterStartContentLayout.Row(6).Column(8),
 
                 CurrentEpubLabel.Row(5).Column(6).ColumnSpan(3),
                 storyNameFrame.Row(5).RowSpan(4).Column(1).ColumnSpan(4),

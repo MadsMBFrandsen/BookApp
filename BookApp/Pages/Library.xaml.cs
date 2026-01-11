@@ -362,7 +362,7 @@ namespace BookApp
                     var chapterTitle = Path.GetFileNameWithoutExtension(chapter.FilePath);
                     var title = Path.GetFileName(chapter.FilePath).Trim().Replace("_", " ");
 
-                    if (fromEpubFile.IsValidChapter(title.ToLower()))
+                    if (fromEpubFile.IsValidChapter(title.ToLower(), chapter.FilePath))
                     {
                         var content = EditContent(chapter.Content);
                         var formattedContent = fromEpubFile.SplitOnPoint(content);

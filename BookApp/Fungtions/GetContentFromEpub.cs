@@ -1,4 +1,6 @@
 ﻿// GetContentFromEpub.cs
+using BookApp.Fungtions;   // for ConvertTextToSound.NormalizeForTts
+using BookApp.Models;      // <-- ensure Chapter resolves to the Models one
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,8 +8,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using VersOne.Epub;
-using BookApp.Fungtions;   // for ConvertTextToSound.NormalizeForTts
-using BookApp.Models;      // <-- ensure Chapter resolves to the Models one
 
 namespace BookApp.Functions
 {
@@ -79,19 +79,26 @@ namespace BookApp.Functions
             return match.Success ? match.Value : string.Empty;
         }
 
-        public bool IsValidChapter(string title,string filepath) =>
-            !(title.Contains("cover.xhtml") ||
-              title.Contains("information.xhtml") ||
-              title.Contains("stylesheet.xhtml") ||
-              title.Contains("title_page.xhtml") ||
-              title.Contains("nav.xhtml") ||
-              title.Contains("introduction.xhtml")) ||
-              filepath.Contains("cover.xhtml") ||
-              filepath.Contains("information.xhtml") ||
-              filepath.Contains("stylesheet.xhtml") ||
-              filepath.Contains("title_page.xhtml") ||
-              filepath.Contains("nav.xhtml") ||
-              filepath.Contains("introduction.xhtml"));
+        public bool IsValidChapter(string title, string filepath)
+        {
+            string[] banned =
+            {
+                "cover.xhtml",
+                "information.xhtml",
+                "stylesheet.xhtml",
+                "title_page.xhtml",
+                "nav.xhtml",
+                "introduction.xhtml"
+            };
+
+            title = title.ToLower();
+            filepath = filepath.ToLower();
+
+            return !banned.Any(b => title.Contains(b) || filepath.Contains(b));
+        }
+
+
+
 
         private List<Chapter> ExtractChaptersFromEpub(string epubFilePath)
         {
@@ -108,7 +115,7 @@ namespace BookApp.Functions
                 foreach (var xhtmlFile in xhtmlFiles)
                 {
                     var title = Path.GetFileNameWithoutExtension(xhtmlFile).Trim().Replace("_", " ");
-                    if (IsValidChapter(Path.GetFileName(xhtmlFile).ToLower()))
+                    if (IsValidChapter(Path.GetFileName(xhtmlFile).ToLower(), xhtmlFile))
                     {
                         var chapter = new Chapter
                         {
@@ -139,6 +146,10 @@ namespace BookApp.Functions
             if (!string.IsNullOrEmpty(epubname) && epubname.Contains("Caterpillar"))
             {
                 content = RemoveSkillsBlocks(content);
+            }
+            if (!string.IsNullOrEmpty(epubname) && epubname.Contains("SpiderGwen"))
+            {
+                content = RemovePatroneStuff(content);
             }
             content = SplitOnPoint(content);
             content = RemoveExtraSpecialChars(content);
@@ -231,5 +242,64 @@ namespace BookApp.Functions
 
             return Tempcontent;
         }
+
+        private string RemovePatroneStuff(string content)
+        {
+            // 1) Remove short Patreon intro before "onto the story!" only if it is at the start and under 100 words
+            content = CutIntroBeforeMarkerIfShort(content, "onto the story!", maxWords: 100, maxMarkerPos: 3000);
+
+            // 2) Remove everything after "Gain access" only if it is near the end of the content
+            content = CutEverythingAfterIfNearEnd(content, "Gain access", nearEndRatio: 0.70);
+
+            return content;
+        }
+
+        private string CutIntroBeforeMarkerIfShort(string text, string marker, int maxWords, int maxMarkerPos)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            int markerIndex = text.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (markerIndex < 0)
+                return text;
+
+            // Only treat it as the "start marker" if it appears near the beginning
+            if (markerIndex > maxMarkerPos)
+                return text;
+
+            string before = text.Substring(0, markerIndex);
+
+            int wordCount = before.Split(
+                new[] { ' ', '\r', '\n', '\t' },
+                StringSplitOptions.RemoveEmptyEntries
+            ).Length;
+
+            if (wordCount >= maxWords)
+                return text;
+
+            // Cut intro including the marker
+            return text.Substring(markerIndex + marker.Length).TrimStart();
+        }
+
+        private string CutEverythingAfterIfNearEnd(string text, string phrase, double nearEndRatio)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            int idx = text.IndexOf(phrase, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0)
+                return text;
+
+            // Only cut if phrase is near the end, so we dont wipe the chapter if it appears early
+            if (idx < (int)(text.Length * nearEndRatio))
+                return text;
+
+            return text.Substring(0, idx);
+        }
+
+
+
+
+
     }
 }

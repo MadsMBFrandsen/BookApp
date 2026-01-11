@@ -26,7 +26,11 @@ namespace BookApp.Fungtions
             var storyDirectory = System.IO.Path.Combine(path ?? "", SafeFileName(storyName ?? "Story"));
             System.IO.Directory.CreateDirectory(storyDirectory);
 
-            var safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+            //var safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+            var cleanedTitle = CleanFileName(chapter.Title ?? "Untitled");
+            var safeTitle = SafeFileName(cleanedTitle);
+
+
             var wavPath = System.IO.Path.Combine(storyDirectory, safeTitle + ".wav");
             var mp3Path = System.IO.Path.Combine(storyDirectory, safeTitle + ".mp3");
 
@@ -214,6 +218,24 @@ namespace BookApp.Fungtions
             if (name.Length > maxBaseLength) name = name.Substring(0, maxBaseLength);
             return string.IsNullOrWhiteSpace(name) ? "untitled" : name;
         }
+
+        public static string CleanFileName(string fileName)
+        {
+            // fileName may contain extension or not
+            string name = Path.GetFileNameWithoutExtension(fileName);
+            string ext = Path.GetExtension(fileName);
+
+            // If it contains Chapter X, strip everything before it
+            var m = Regex.Match(name, @"Chapter\s*\d+", RegexOptions.IgnoreCase);
+            if (!m.Success)
+                return fileName;
+
+            string cleaned = name.Substring(m.Index);
+
+            return cleaned + ext;
+        }
+
+
     }
 
     // Cross-platform stub; implement with native TTS if you target Android/iOS
