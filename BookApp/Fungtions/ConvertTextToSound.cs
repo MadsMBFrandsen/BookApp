@@ -25,10 +25,17 @@ namespace BookApp.Fungtions
             // Ensure the directory exists (use safe folder name)
             var storyDirectory = System.IO.Path.Combine(path ?? "", SafeFileName(storyName ?? "Story"));
             System.IO.Directory.CreateDirectory(storyDirectory);
-
-            //var safeTitle = SafeFileName(chapter.Title ?? "Untitled");
-            var cleanedTitle = CleanFileName(chapter.Title ?? "Untitled");
-            var safeTitle = SafeFileName(cleanedTitle);
+            var safeTitle = "Error";
+            if (storyName.Contains("Outfit"))
+            {
+                safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+            }
+            else
+            {
+                //var safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+                var cleanedTitle = CleanFileName(chapter.Title ?? "Untitled");
+                safeTitle = SafeFileName(cleanedTitle);
+            }
 
 
             var wavPath = System.IO.Path.Combine(storyDirectory, safeTitle + ".wav");
@@ -89,7 +96,7 @@ namespace BookApp.Fungtions
             // Clean up temp WAV no matter what
             try { System.IO.File.Delete(wavPath); } catch { /* ignore */ }
 
-            
+
             try
             {
                 using var tagFile = TagLib.File.Create(mp3Path);
@@ -104,6 +111,9 @@ namespace BookApp.Fungtions
 
                 if (int.TryParse(chapter.Number, out int trackNum))
                     tag.Track = (uint)trackNum;
+
+                if (!string.IsNullOrWhiteSpace(chapter?.EpubDescription))
+                    tag.Comment = chapter.EpubDescription;
 
                 // Get/create ID3v2 tag explicitly for pictures
                 var id3v2 = tagFile.GetTag(TagLib.TagTypes.Id3v2, true) as TagLib.Id3v2.Tag;

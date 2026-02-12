@@ -60,6 +60,8 @@ namespace BookApp.Functions
                         Number = chapterNumber,
                         Content = CleanContent(item.Content),
                         Author = epubBook.Author,
+                        //Tags = epubBook.  dont exist
+                        EpubDescription = epubBook.Description,
                         CoverImage = coverBytes
                     };
                     if (chapter.WordCount > 300)
