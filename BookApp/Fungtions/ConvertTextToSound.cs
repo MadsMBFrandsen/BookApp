@@ -26,15 +26,24 @@ namespace BookApp.Fungtions
             var storyDirectory = System.IO.Path.Combine(path ?? "", SafeFileName(storyName ?? "Story"));
             System.IO.Directory.CreateDirectory(storyDirectory);
             var safeTitle = "Error";
-            if (storyName.Contains("Outfit"))
+            //if (storyName.Contains("Outfit"))
+            //{
+            //    safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+            //    safeTitle = Regex.Replace(safeTitle, @"^\d{4}", "");
+            //}
+            if (storyName.Contains("Reapers") && storyName.Contains("Resurgence"))
             {
-                safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+                safeTitle = Regex.Replace(chapter.Title, @"^\d{4}", "");
+                safeTitle.Trim();
             }
             else
             {
-                //var safeTitle = SafeFileName(chapter.Title ?? "Untitled");
-                var cleanedTitle = CleanFileName(chapter.Title ?? "Untitled");
-                safeTitle = SafeFileName(cleanedTitle);
+                var title = chapter.Title ?? "Untitled";
+                title = Regex.Replace(title, @"^[\d\s]+", "");
+                safeTitle = SafeFileName(title);
+                //safeTitle = SafeFileName(chapter.Title ?? "Untitled");
+                //var cleanedTitle = CleanFileName(chapter.Title ?? "Untitled");
+                //safeTitle = SafeFileName(cleanedTitle);
             }
 
 
@@ -114,6 +123,9 @@ namespace BookApp.Fungtions
 
                 if (!string.IsNullOrWhiteSpace(chapter?.EpubDescription))
                     tag.Comment = chapter.EpubDescription;
+
+                if (chapter?.Tags?.Length > 0)
+                    tag.Genres = chapter.Tags;
 
                 // Get/create ID3v2 tag explicitly for pictures
                 var id3v2 = tagFile.GetTag(TagLib.TagTypes.Id3v2, true) as TagLib.Id3v2.Tag;

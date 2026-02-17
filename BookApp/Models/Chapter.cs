@@ -13,7 +13,7 @@ namespace BookApp.Models
         public string Content { get; set; }
         public string Author { get; set; } = string.Empty;
         public string Number { get; set; } = string.Empty;
-        public string Tags { get; set; } = string.Empty;
+        public string[]? Tags { get; set; } 
         public string EpubDescription { get; set; } = string.Empty;
         public byte[] CoverImage { get; set; }
         public int WordCount

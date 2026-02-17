@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using VersOne.Epub;
 
@@ -53,6 +54,10 @@ namespace BookApp.Functions
                 if (IsValidChapter(title.ToLower(), item.FilePath))
                 {
                     string chapterNumber = ExtractFourDigitPrefix(title);
+                    if (title.Contains("532"))
+                    {
+
+                    }
 
                     var chapter = new Chapter
                     {
@@ -60,7 +65,7 @@ namespace BookApp.Functions
                         Number = chapterNumber,
                         Content = CleanContent(item.Content),
                         Author = epubBook.Author,
-                        //Tags = epubBook.  dont exist
+                        Tags= ExtractEpubTags(epubBook),
                         EpubDescription = epubBook.Description,
                         CoverImage = coverBytes
                     };
@@ -299,6 +304,55 @@ namespace BookApp.Functions
             return text.Substring(0, idx);
         }
 
+
+        static string? GetFirstStringProperty(object? obj, params string[] names)
+        {
+            if (obj == null) return null;
+
+            var t = obj.GetType();
+
+            foreach (var name in names)
+            {
+                var p = t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+                if (p != null && p.PropertyType == typeof(string))
+                    return (string?)p.GetValue(obj);
+            }
+
+            // fallback: sometimes the string is the only string property
+            var anyStringProp = t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                                .FirstOrDefault(p => p.PropertyType == typeof(string));
+            return anyStringProp != null ? (string?)anyStringProp.GetValue(obj) : null;
+        }
+
+        static string[] ExtractEpubTags(EpubBook? epubBook)
+        {
+            var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var subjects = epubBook?.Schema?.Package?.Metadata?.Subjects;
+            if (subjects == null) return Array.Empty<string>();
+
+            foreach (var subj in subjects)
+            {
+                // Try common property names first
+                var raw = GetFirstStringProperty(
+                    subj,
+                    "Subject", "Value", "Text", "Content", "Name"
+                );
+
+                if (string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                // Your EPUB uses one comma-separated string in dc:subject
+                foreach (var part in raw.Split(new[] { ',', ';', '|', '\n', '\r' },
+                                               StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var t = part.Trim();
+                    if (t.Length > 0) tags.Add(t);
+                }
+            }
+
+            return tags.ToArray();
+        }
 
 
 
