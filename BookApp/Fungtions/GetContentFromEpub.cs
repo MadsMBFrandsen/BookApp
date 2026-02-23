@@ -48,6 +48,10 @@ namespace BookApp.Functions
                 // ignore cover errors, just means no image
             }
 
+            string author = (epubBook.Author ?? string.Empty).Trim();
+            string description = (epubBook.Description ?? string.Empty).Trim();
+            string[] tags = ExtractEpubTags(epubBook);
+
             foreach (var item in epubBook.ReadingOrder)
             {
                 var title = Path.GetFileNameWithoutExtension(item.FilePath).Trim().Replace("_", " ");
@@ -61,12 +65,12 @@ namespace BookApp.Functions
 
                     var chapter = new Chapter
                     {
-                        Title = title,
+                        Title = title.Trim(),
                         Number = chapterNumber,
-                        Content = CleanContent(item.Content),
-                        Author = epubBook.Author,
-                        Tags= ExtractEpubTags(epubBook),
-                        EpubDescription = epubBook.Description,
+                        Content = CleanContent(item.Content, title),
+                        Author = author,
+                        Tags = tags,
+                        EpubDescription = description,
                         CoverImage = coverBytes
                     };
                     if (chapter.WordCount > 300)
@@ -100,6 +104,10 @@ namespace BookApp.Functions
 
             title = title.ToLower();
             filepath = filepath.ToLower();
+            if (title.Contains("universe_cover")|| title.Contains("universe cover")) 
+            {
+                return true;
+            }
 
             return !banned.Any(b => title.Contains(b) || filepath.Contains(b));
         }
@@ -121,13 +129,13 @@ namespace BookApp.Functions
 
                 foreach (var xhtmlFile in xhtmlFiles)
                 {
-                    var title = Path.GetFileNameWithoutExtension(xhtmlFile).Trim().Replace("_", " ");
+                    var title = Path.GetFileNameWithoutExtension(xhtmlFile).Replace("_", " ").Trim();
                     if (IsValidChapter(Path.GetFileName(xhtmlFile).ToLower(), xhtmlFile))
                     {
                         var chapter = new Chapter
                         {
                             Title = title,
-                            Content = CleanContent(System.IO.File.ReadAllText(xhtmlFile))
+                            Content = CleanContent(System.IO.File.ReadAllText(xhtmlFile), title)
                         };
                         chapters.Add(chapter);
                     }
@@ -145,11 +153,14 @@ namespace BookApp.Functions
             return chapters.OrderBy(chapter => chapter.Title).ToList();
         }
 
-        private string CleanContent(string content)
+        private string CleanContent(string content, string? chapterTitle)
         {
             content = RemoveStyleTagsAndCssBlocks(content);
             content = RemoveInlineStyles(content);
             content = CleanHtmlTags(content);
+
+            content = RemoveRepeatedChapterTitleFromStart(content, chapterTitle, keepOneInContent: false);
+
             if (!string.IsNullOrEmpty(epubname) && epubname.Contains("Caterpillar"))
             {
                 content = RemoveSkillsBlocks(content);
@@ -157,6 +168,10 @@ namespace BookApp.Functions
             if (!string.IsNullOrEmpty(epubname) && epubname.Contains("SpiderGwen"))
             {
                 content = RemovePatroneStuff(content);
+            }
+            if (!string.IsNullOrEmpty(epubname) && epubname.Contains("Infinite") && epubname.Contains("Comprehension"))
+            {
+                content = RemoveCharsfromContent(content);
             }
             content = SplitOnPoint(content);
             content = RemoveExtraSpecialChars(content);
@@ -354,8 +369,89 @@ namespace BookApp.Functions
             return tags.ToArray();
         }
 
+        static string RemoveCharsfromContent(string content)
+        {
+            string tempcontent= string.Empty;
+            tempcontent = content.Trim();
 
+            tempcontent = tempcontent.Replace("“`", "");
+            tempcontent = tempcontent.Replace("Translator: 549690339", "");
 
+            return tempcontent;
+        }
 
+        private static string RemoveRepeatedChapterTitleFromStart(string content, string? chapterTitle, bool keepOneInContent)
+        {
+            if (string.IsNullOrWhiteSpace(content) || string.IsNullOrWhiteSpace(chapterTitle))
+                return content;
+
+            // Build a very tolerant pattern from the chapter title
+            string titlePattern = BuildLooseTitlePattern(chapterTitle);
+
+            // Some sources prepend a lone number like "1 " before "Chapter ..."
+            // Allow optional leading digits and whitespace before each repetition
+            string oneTitle = @"\s*(?:\d+\s+)?(?:" + titlePattern + @")\s*";
+
+            // Match 2+ repetitions at the start (including concatenated ones)
+            string repeatedAtStart = @"^(?:" + oneTitle + @"){2,}";
+
+            var rxRepeated = new Regex(repeatedAtStart, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            if (!rxRepeated.IsMatch(content))
+            {
+                // Even if its only once, you might still want to remove it:
+                // uncomment next line if you always want to drop a single title at start
+                // content = Regex.Replace(content, @"^" + oneTitle, "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                return content;
+            }
+
+            if (keepOneInContent)
+            {
+                // Replace many copies with exactly one copy (use the first matched chunk trimmed)
+                content = rxRepeated.Replace(content, m =>
+                {
+                    // Keep just one title occurrence, normalized spacing
+                    string first = Regex.Match(m.Value, oneTitle, RegexOptions.IgnoreCase | RegexOptions.Singleline).Value;
+                    return first.Trim() + "\n";
+                });
+            }
+            else
+            {
+                // Remove all repeated titles at the start
+                content = rxRepeated.Replace(content, "");
+                // Also remove a single remaining title at the start if present
+                content = Regex.Replace(content, @"^" + oneTitle, "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            }
+
+            // Clean up whitespace after removal
+            content = content.TrimStart();
+            content = Regex.Replace(content, @"\n{3,}", "\n\n");
+
+            return content;
+        }
+
+        private static string BuildLooseTitlePattern(string chapterTitle)
+        {
+            // Drop leading 4 digits if present: "0001 ..."
+            string t = Regex.Replace(chapterTitle.Trim(), @"^\d{4}\s*", "", RegexOptions.IgnoreCase);
+
+            // Tokenize into alphanum chunks: Chapter, 1, 1, Please, Ascend, Little, Martial, Uncle, 1
+            var tokens = Regex.Matches(t, @"[A-Za-z0-9]+")
+                              .Cast<Match>()
+                              .Select(m => m.Value)
+                              .ToList();
+
+            if (tokens.Count == 0)
+                return Regex.Escape(t);
+
+            // Allow any punctuation, underscores, or whitespace between tokens
+            // This matches: commas, exclamation, dashes, underscores, multiple spaces, etc.
+            string between = @"[\W_]*";
+
+            // Build: Chapter[\W_]*1[\W_]*1[\W_]*Please[\W_]*Ascend...
+            string pattern = string.Join(between, tokens.Select(Regex.Escape));
+
+            return pattern;
+        }
     }
 }
