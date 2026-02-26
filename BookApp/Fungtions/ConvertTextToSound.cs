@@ -25,27 +25,23 @@ namespace BookApp.Fungtions
             // Ensure the directory exists (use safe folder name)
             var storyDirectory = System.IO.Path.Combine(path ?? "", SafeFileName(storyName ?? "Story"));
             System.IO.Directory.CreateDirectory(storyDirectory);
-            var safeTitle = "Error";
-            //if (storyName.Contains("Outfit"))
-            //{
-            //    safeTitle = SafeFileName(chapter.Title ?? "Untitled");
-            //    safeTitle = Regex.Replace(safeTitle, @"^\d{4}", "");
-            //}
-            if (storyName.Contains("Reapers") && storyName.Contains("Resurgence"))
+
+            // Build a safe filename title:
+            // If it contains "chapter" keep it (trim only).
+            // Otherwise remove ALL leading digits and spaces.
+            var rawTitle = chapter.Title ?? "Untitled";
+
+            string normalizedTitle;
+            if (!Regex.IsMatch(rawTitle, @"\bchapter\b", RegexOptions.IgnoreCase))
             {
-                safeTitle = Regex.Replace(chapter.Title, @"^\d{4}", "");
-                safeTitle.Trim();
+                normalizedTitle = rawTitle.Trim();
             }
             else
             {
-                var title = chapter.Title ?? "Untitled";
-                title = Regex.Replace(title, @"^[\d\s]+", "");
-                safeTitle = SafeFileName(title);
-                //safeTitle = SafeFileName(chapter.Title ?? "Untitled");
-                //var cleanedTitle = CleanFileName(chapter.Title ?? "Untitled");
-                //safeTitle = SafeFileName(cleanedTitle);
+                normalizedTitle = Regex.Replace(rawTitle, @"^[\d\s]+", "").Trim();
             }
 
+            var safeTitle = SafeFileName(normalizedTitle);
 
             var wavPath = System.IO.Path.Combine(storyDirectory, safeTitle + ".wav");
             var mp3Path = System.IO.Path.Combine(storyDirectory, safeTitle + ".mp3");
@@ -105,11 +101,21 @@ namespace BookApp.Fungtions
             // Clean up temp WAV no matter what
             try { System.IO.File.Delete(wavPath); } catch { /* ignore */ }
 
-
             try
             {
                 using var tagFile = TagLib.File.Create(mp3Path);
                 var tag = tagFile.Tag;
+
+                // Title tag: same rule as filename
+                {
+                    var tagRawTitle = chapter.Title ?? "Untitled";
+                    string tagNormalizedTitle =
+                        Regex.IsMatch(tagRawTitle, @"\bchapter\b", RegexOptions.IgnoreCase)
+                            ? tagRawTitle.Trim()
+                            : Regex.Replace(tagRawTitle, @"^[\d\s]+", "").Trim();
+
+                    tag.Title = tagNormalizedTitle;
+                }
 
                 // Safely set the author (performer)
                 if (!string.IsNullOrWhiteSpace(chapter?.Author))
@@ -142,13 +148,6 @@ namespace BookApp.Fungtions
 
                     id3v2.Pictures = new TagLib.IPicture[] { picture };
                 }
-
-                //if (!string.IsNullOrWhiteSpace(chapter?.Title))
-                //{
-                //    // remove the leading 4 digits and any extra spaces
-                //    string cleanTitle = Regex.Replace(chapter.Title, @"^\d{4}\s*", "");
-                //    tag.Title = cleanTitle;
-                //}
 
                 tagFile.Save();
             }
@@ -256,8 +255,6 @@ namespace BookApp.Fungtions
 
             return cleaned + ext;
         }
-
-
     }
 
     // Cross-platform stub; implement with native TTS if you target Android/iOS
