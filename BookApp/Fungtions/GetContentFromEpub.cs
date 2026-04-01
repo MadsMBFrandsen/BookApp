@@ -104,7 +104,7 @@ namespace BookApp.Functions
 
             title = title.ToLower();
             filepath = filepath.ToLower();
-            if (title.Contains("universe_cover")|| title.Contains("universe cover")) 
+            if (title.Contains("universe_cover") || title.Contains("universe cover"))
             {
                 return true;
             }
@@ -160,19 +160,170 @@ namespace BookApp.Functions
             content = CleanHtmlTags(content);
 
             content = RemoveRepeatedChapterTitleFromStart(content, chapterTitle, keepOneInContent: false);
+            string ct= chapterTitle;
+            var name = epubname?.ToLowerInvariant();
 
-            if (!string.IsNullOrEmpty(epubname) && epubname.Contains("Caterpillar"))
+            if (!string.IsNullOrEmpty(name))
             {
-                content = RemoveSkillsBlocks(content);
+                if (name.Contains("caterpillar"))
+                    content = RemoveSkillsBlocks(content);
+
+                if (name.Contains("spidergwen"))
+                    content = RemovePatroneStuff(content);
+
+                if (name.Contains("infinite") && name.Contains("comprehension"))
+                    content = RemoveCharsfromContent(content);
+
+                if (name.Contains("naruto") &&
+                    name.Contains("learning") &&
+                    name.Contains("ninjutsu") &&
+                    name.Contains("single") &&
+                    name.Contains("glance"))
+                {
+                    content = RemoveViaSplitFromContent(content);
+                }
+
+                if (name.Contains("douluo") &&
+                    name.Contains("dalu") &&
+                    name.Contains("true") &&
+                    name.Contains("destiny"))
+                {
+                    if (ct.Contains("123"))
+                    {
+
+                    }
+                    content = RemoveAuthorNotes(content);
+                    content = RemoveEverythingBeforeChapterIfInFirstTenPercent(content);
+                }
+
+                if (name.Contains("the") &&
+                    name.Contains("fox") &&
+                    name.Contains("hole"))
+                {
+                    content = CutContentByPercentPosition(content, "XXX", 20, "end");
+                }
+                if (name.Contains("dream") &&
+                    name.Contains("eternity") &&
+                    name.Contains("of"))
+                {
+                    content = RemoveSlashSeparators(content);
+                }
+                if (name.Contains("gamer") &&
+                    name.Contains("became") &&
+                    name.Contains("pokemon") &&
+                    name.Contains("trainer"))
+                {
+                    content = CutContentByPercentPosition(content, "-Pokemon-", 35, "start");
+                    content = CutContentByPercentPosition(content, "Done!", 40, "end");
+                    content = RemoveTrailingWord(content, "And");
+                }
+                if (name.Contains("the") &&
+                    name.Contains("gbpt") &&
+                    name.Contains("vol"))
+                {
+                    content = CutContentByPercentPosition(content, "-Pokemon-", 35, "start");
+                    content = CutContentByPercentPosition(content, "Done!", 40, "end");
+                    content = RemoveTrailingWord(content, "And");
+                }
+                if (name.Contains("dd") &&
+                   name.Contains("heaven") &&
+                   name.Contains("undressed") &&
+                   name.Contains("demigod") &&
+                   name.Contains("master"))
+                {
+                    content = CutContentByPercentPosition(content, "(End of Chapter)", 10, "end");
+                }
+                if (name.Contains("douluo") &&
+                   name.Contains("dalu") &&
+                   name.Contains("stealing") &&
+                   name.Contains("tang") &&
+                   name.Contains("destiny"))
+                {
+                    content = CutContentByPercentPosition(content, "(End of Chapter)", 10, "end");
+                }
+                if (name.Contains("dd") &&
+                   name.Contains("supreme") &&
+                   name.Contains("bone") &&
+                   name.Contains("awakens") &&
+                   name.Contains("goddesses"))
+                {
+                    content = CutContentByPercentPosition(content, "(End of Chapter)", 10, "end");
+                }
+                if (name.Contains("Retirement"))
+                {
+                    content = CutContentByPercentPosition(content, "XXXXX", 15, "start");
+                }
+                if (name.Contains("btth") &&
+                   name.Contains("treasure") &&
+                   name.Contains("exchange") &&
+                   name.Contains("system"))
+                {
+                    content = CutContentByPercentPosition(content, "(End of Chapter)", 10, "end");
+                }
+                if (name.Contains("douluo") &&
+                   name.Contains("nature") &&
+                   name.Contains("chosen") &&
+                   name.Contains("harvesting"))
+                {
+                    content = CutContentByPercentPosition(content, "(End of Chapter)", 10, "end");
+                }
+                if (name.Contains("crossover") &&
+                   name.Contains("problematic") &&
+                   name.Contains("human") &&
+                   name.Contains("arcadia"))
+                {
+                    //if (content.Contains("Read 50 advanced chapters", StringComparison.OrdinalIgnoreCase))
+                    //{ }
+                    content = CutContentByPercentPosition(content, "Read 50 advanced chapters", 5, "end");
+                    content = CutContentByPercentPosition(content, "Every 200 Power Stones = 1 Bonus Chapter!", 5, "end");
+                }
+                if (name.Contains("ding") &&
+                   name.Contains("ultramarine") &&
+                   name.Contains("joined") &&
+                   name.Contains("group"))
+                {
+                    content = CutContentByPercentPosition(content, "(Ps", 10, "end");
+                    content = CutContentByPercentPosition(content, "END OF CHAPTER", 10, "end");
+                }
+                if (name.Contains("multiverse") &&
+                   name.Contains("conquest") &&
+                   name.Contains("starting") &&
+                   name.Contains("dragon"))
+                {
+                    content = CutContentByPercentPosition(content, "darkshadow6395", 10, "start");
+                    content = CutContentByPercentPosition(content, "(End of chapter)", 10, "end");
+                    content = CutContentByPercentPosition(content, "(Chapter End)", 10, "end");
+                    content = CutContentByPercentPosition(content, "(End Of The Chapter)", 10, "end");
+                    content = CutContentByPercentPosition(content, "You can read ahead up to", 10, "end");
+                }
+                if (name.Contains("konoha") &&
+                  name.Contains("uchiha") &&
+                  name.Contains("living") &&
+                  name.Contains("hell"))
+                {
+                    content = CutContentByPercentPosition(content, "<><><>", 10, "end");
+                }
+                if (name.Contains("fate") &&
+                 name.Contains("just") &&
+                 name.Contains("want") &&
+                 name.Contains("die")&&
+                 name.Contains("throne") &&
+                 name.Contains("heroes"))
+                {
+                    content = CutContentByPercentPosition(content, "<><><>", 15, "end");
+                }
+                if (name.Contains("food") &&
+                 name.Contains("wars") &&
+                 name.Contains("inheriting") &&
+                 name.Contains("dark") &&
+                 name.Contains("culinary") &&
+                 name.Contains("world"))
+                {
+                    content = CutContentByPercentPosition(content, "======", 10, "end");
+                }//Food Wars: Inheriting the Dark Culinary World from the Start
+
             }
-            if (!string.IsNullOrEmpty(epubname) && epubname.Contains("SpiderGwen"))
-            {
-                content = RemovePatroneStuff(content);
-            }
-            if (!string.IsNullOrEmpty(epubname) && epubname.Contains("Infinite") && epubname.Contains("Comprehension"))
-            {
-                content = RemoveCharsfromContent(content);
-            }
+
             content = SplitOnPoint(content);
             content = RemoveExtraSpecialChars(content);
             content = LimitRepeatedCharacters(content);
@@ -371,7 +522,7 @@ namespace BookApp.Functions
 
         static string RemoveCharsfromContent(string content)
         {
-            string tempcontent= string.Empty;
+            string tempcontent = string.Empty;
             tempcontent = content.Trim();
 
             tempcontent = tempcontent.Replace("“`", "");
@@ -380,51 +531,84 @@ namespace BookApp.Functions
             return tempcontent;
         }
 
+        static string RemoveViaSplitFromContent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return string.Empty;
+
+            // Find blocks of 8 or more consecutive dashes
+            var matches = Regex.Matches(content, "-{8,}");
+
+            if (matches.Count == 0)
+                return content;
+
+            var lastMatch = matches[matches.Count - 1];
+
+            // position must be within last 20% of content
+            int threshold = (int)(content.Length * 0.8);
+
+            if (lastMatch.Index < threshold)
+                return content;
+
+            return content.Substring(0, lastMatch.Index);
+        }
+
         private static string RemoveRepeatedChapterTitleFromStart(string content, string? chapterTitle, bool keepOneInContent)
         {
             if (string.IsNullOrWhiteSpace(content) || string.IsNullOrWhiteSpace(chapterTitle))
                 return content;
 
-            // Build a very tolerant pattern from the chapter title
+            // Build a tolerant regex pattern from the chapter title.
+            // The pattern allows punctuation, whitespace, and other separators between characters
+            // so titles like "Xiao Xun'er, Tenfold Feedback!" still match even if the source text
+            // contains variants like "Xiao Xuner Tenfold Feedback" or different punctuation.
             string titlePattern = BuildLooseTitlePattern(chapterTitle);
 
-            // Some sources prepend a lone number like "1 " before "Chapter ..."
-            // Allow optional leading digits and whitespace before each repetition
-            string oneTitle = @"\s*(?:\d+\s+)?(?:" + titlePattern + @")\s*";
+            // Some sources prepend a numeric index before the chapter title.
+            // Examples: "1 Chapter 1...", "1: Chapter 1...", "1. Chapter 1..."
+            // Allow an optional numeric prefix followed by optional punctuation and whitespace.
+            string oneTitle = @"\s*(?:\d+\s*[:.\-]?\s*)?(?:" + titlePattern + @")[\W_]*";
 
-            // Match 2+ repetitions at the start (including concatenated ones)
+            // Match two or more occurrences of the chapter title at the very beginning of the content.
+            // This catches cases where scrapers or OCR pipelines duplicated the title multiple times.
             string repeatedAtStart = @"^(?:" + oneTitle + @"){2,}";
 
             var rxRepeated = new Regex(repeatedAtStart, RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
+            // If there are not at least two consecutive titles at the start,
+            // return the content unchanged.
             if (!rxRepeated.IsMatch(content))
             {
-                // Even if its only once, you might still want to remove it:
-                // uncomment next line if you always want to drop a single title at start
+                // If you ever want to remove even a single title at the beginning,
+                // you could uncomment the following line:
                 // content = Regex.Replace(content, @"^" + oneTitle, "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
                 return content;
             }
 
             if (keepOneInContent)
             {
-                // Replace many copies with exactly one copy (use the first matched chunk trimmed)
+                // Replace multiple consecutive titles with exactly one normalized title.
+                // The first matched title fragment is kept and trimmed to remove extra spacing.
                 content = rxRepeated.Replace(content, m =>
                 {
-                    // Keep just one title occurrence, normalized spacing
                     string first = Regex.Match(m.Value, oneTitle, RegexOptions.IgnoreCase | RegexOptions.Singleline).Value;
                     return first.Trim() + "\n";
                 });
             }
             else
             {
-                // Remove all repeated titles at the start
+                // Remove all duplicated titles from the start of the content.
                 content = rxRepeated.Replace(content, "");
-                // Also remove a single remaining title at the start if present
+
+                // If one more title remains at the beginning, remove that as well.
                 content = Regex.Replace(content, @"^" + oneTitle, "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
             }
 
-            // Clean up whitespace after removal
+            // Clean up leading whitespace left behind after removal.
             content = content.TrimStart();
+
+            // Collapse excessive blank lines that might result from stripping titles.
             content = Regex.Replace(content, @"\n{3,}", "\n\n");
 
             return content;
@@ -435,8 +619,21 @@ namespace BookApp.Functions
             // Drop leading 4 digits if present: "0001 ..."
             string t = Regex.Replace(chapterTitle.Trim(), @"^\d{4}\s*", "", RegexOptions.IgnoreCase);
 
+            // Some sources include an extra leading chapter index before the real title:
+            // "1 Chapter 1 Binding Xiao Xuner Tenfold Feedback"
+            // Since RemoveRepeatedChapterTitleFromStart already allows an optional numeric prefix
+            // before the title, remove that duplicated leading number here.
+            t = Regex.Replace(t, @"^\d+\s+(?=Chapter\b)", "", RegexOptions.IgnoreCase);
+
+            // Normalize apostrophes so different unicode versions behave the same
+            t = t.Replace("’", "'")
+                 .Replace("‘", "'")
+                 .Replace("`", "'")
+                 .Replace("´", "'");
+
             // Tokenize into alphanum chunks: Chapter, 1, 1, Please, Ascend, Little, Martial, Uncle, 1
-            var tokens = Regex.Matches(t, @"[A-Za-z0-9]+")
+            // Keep apostrophes inside words so "Yan's" doesn't become "Yan", "s"
+            var tokens = Regex.Matches(t, @"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)*")
                               .Cast<Match>()
                               .Select(m => m.Value)
                               .ToList();
@@ -448,10 +645,120 @@ namespace BookApp.Functions
             // This matches: commas, exclamation, dashes, underscores, multiple spaces, etc.
             string between = @"[\W_]*";
 
+            // Allow punctuation inside tokens too by splitting characters
+            // This lets "Yan's" match "Yan's", "Yans", "Yan s", etc.
+            string TokenToLoose(string token)
+            {
+                var chars = token.Where(char.IsLetterOrDigit)
+                                 .Select(c => Regex.Escape(c.ToString()));
+
+                return string.Join(@"[\W_]*", chars);
+            }
+
             // Build: Chapter[\W_]*1[\W_]*1[\W_]*Please[\W_]*Ascend...
-            string pattern = string.Join(between, tokens.Select(Regex.Escape));
+            string pattern = string.Join(between, tokens.Select(TokenToLoose));
 
             return pattern;
+        }
+
+        private static readonly Regex ChapterHeaderRegex =
+            new Regex(@"\bchapter\s+\d+\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex AuthorNoteRegex =
+            new Regex(@"\(\s*a\s*/\s*n\s*:\s*.*?\)",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+
+        private static string RemoveEverythingBeforeChapterIfInFirstTenPercent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            var m = ChapterHeaderRegex.Match(content);
+            if (!m.Success)
+                return content;
+
+            int tenPercent = (int)Math.Floor(content.Length * 0.10);
+
+            // Remove everything before Chapter X only if "Chapter X" starts within first 10%
+            if (m.Index <= tenPercent)
+                return content.Substring(m.Index);
+
+            return content;
+        }
+
+        private static string RemoveAuthorNotes(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            return AuthorNoteRegex.Replace(content, "");
+        }
+
+        private static string CutContentByPercentPosition(string content, string marker, int percent, string mode)
+        {
+            if (string.IsNullOrEmpty(content) || string.IsNullOrEmpty(marker))
+                return content;
+
+            int idx = mode.Equals("end", StringComparison.OrdinalIgnoreCase)
+                ? content.LastIndexOf(marker, StringComparison.OrdinalIgnoreCase)
+                : content.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+
+            if (idx < 0)
+                return content;
+
+            int firstThreshold = (int)(content.Length * (percent / 100.0));
+            int lastThreshold = (int)(content.Length * (1.0 - percent / 100.0));
+
+            if (mode.Equals("start", StringComparison.OrdinalIgnoreCase))
+            {
+                if (idx <= firstThreshold)
+                    return content.Substring(idx + marker.Length).TrimStart();
+            }
+            else if (mode.Equals("end", StringComparison.OrdinalIgnoreCase))
+            {
+                if (idx >= lastThreshold)
+                    return content.Substring(0, idx).TrimEnd();
+            }
+
+            return content;
+        }
+
+        public static string RemoveSlashSeparators(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return content;
+
+            var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
+
+            bool IsSeparator(string line)
+            {
+                var t = line.Trim();
+                return t.Length >= 8 && t.All(c => c == '/');
+            }
+
+            int first = lines.FindIndex(IsSeparator);
+            int last = lines.FindLastIndex(IsSeparator);
+
+            if (first >= 0)
+                lines.RemoveRange(0, first + 1);
+
+            if (last >= 0 && last < lines.Count)
+                lines.RemoveRange(last - first - 1, lines.Count - (last - first - 1));
+
+            return string.Join("\n", lines).Trim();
+        }
+
+        private static string RemoveTrailingWord(string content, string marker)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return content;
+
+            content = content.TrimEnd();
+
+            if (content.EndsWith(marker, StringComparison.OrdinalIgnoreCase))
+                content = content.Substring(0, content.Length - marker.Length).TrimEnd();
+
+            return content;
         }
     }
 }
