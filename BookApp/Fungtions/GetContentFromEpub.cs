@@ -1,6 +1,6 @@
 ﻿// GetContentFromEpub.cs
-using BookApp.Fungtions;   // for ConvertTextToSound.NormalizeForTts
-using BookApp.Models;      // <-- ensure Chapter resolves to the Models one
+using BookApp.Fungtions;   
+using BookApp.Models;      
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -328,6 +328,7 @@ namespace BookApp.Functions
             content = RemoveExtraSpecialChars(content);
             content = LimitRepeatedCharacters(content);
             content = RemoveExtraStuff(content);
+            content = Regex.Replace(content, @"[^\w\s]+$", "");
 
             // final light cleanup before TTS:
             content = ConvertTextToSound.NormalizeForTts(content);
@@ -717,7 +718,14 @@ namespace BookApp.Functions
             else if (mode.Equals("end", StringComparison.OrdinalIgnoreCase))
             {
                 if (idx >= lastThreshold)
-                    return content.Substring(0, idx).TrimEnd();
+                {
+                    int lineStart = idx;
+                    int lineEnd = content.IndexOf('\n', idx);
+                    if (lineEnd == -1)
+                        lineEnd = content.Length;
+
+                    return content.Substring(0, lineStart).TrimEnd();
+                }
             }
 
             return content;
